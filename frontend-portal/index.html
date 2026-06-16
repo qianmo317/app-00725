@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>数据应用门户 - 首页工作台</title>
+    <link rel="stylesheet" href="./src/styles/main.scss" />
+    <link rel="stylesheet" href="./src/styles/home.scss" />
+  </head>
+  <body class="portal-body">
+    <!-- 顶部导航 -->
+    <header class="portal-header">
+      <div class="header-left">
+        <div class="logo">
+          <i class="layui-icon layui-icon-app"></i>
+          <span>数据应用门户</span>
+        </div>
+      </div>
+      <button class="mobile-menu-btn" id="mobileMenuBtn">
+        <i class="layui-icon layui-icon-spread-left"></i>
+      </button>
+      <div class="header-center" id="headerNav">
+        <ul class="nav-menu">
+          <li class="nav-item active" data-page="home">
+            <i class="layui-icon layui-icon-home"></i>
+            <span>首页工作台</span>
+          </li>
+          <li class="nav-item" data-page="card-factory">
+            <i class="layui-icon layui-icon-chart"></i>
+            <span>卡片工厂</span>
+          </li>
+          <li class="nav-item" data-page="app-market">
+            <i class="layui-icon layui-icon-template-1"></i>
+            <span>应用广场</span>
+          </li>
+          <li class="nav-item" data-page="designer">
+            <i class="layui-icon layui-icon-edit"></i>
+            <span>低代码设计器</span>
+          </li>
+          <li class="nav-item" data-page="map">
+            <i class="layui-icon layui-icon-location"></i>
+            <span>地图服务</span>
+          </li>
+        </ul>
+      </div>
+      <div class="header-right">
+        <div class="header-actions">
+          <div class="action-item" id="toggleEditMode">
+            <i class="layui-icon layui-icon-set"></i>
+            <span>编辑模式</span>
+          </div>
+          <div class="action-item">
+            <i class="layui-icon layui-icon-notice"></i>
+            <span class="badge">3</span>
+          </div>
+        </div>
+        <div class="user-info" id="userDropdown">
+          <img
+            src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzNiIgaGVpZ2h0PSIzNiIgdmlld0JveD0iMCAwIDM2IDM2Ij48cmVjdCBmaWxsPSIjMWU5ZmZmIiB3aWR0aD0iMzYiIGhlaWdodD0iMzYiIHJ4PSIxOCIvPjx0ZXh0IGZpbGw9IiNmZmYiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZm9udC13ZWlnaHQ9ImJvbGQiIHg9IjUwJSIgeT0iNTAlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjM1ZW0iPuW8oDwvdGV4dD48L3N2Zz4="
+            alt="avatar"
+            class="avatar"
+          />
+          <span class="username">张三</span>
+          <i class="layui-icon layui-icon-down"></i>
+        </div>
+      </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="portal-main">
+      <!-- 固定卡片区域 - 不可移动删除 -->
+      <section class="fixed-section">
+        <div class="section-header">
+          <h2><i class="layui-icon layui-icon-flag"></i> 核心数据驾驶舱</h2>
+          <span class="lock-badge"
+            ><i class="layui-icon layui-icon-password"></i> 固定区域</span
+          >
+        </div>
+        <div class="fixed-cards">
+          <!-- KPI 指标卡片 -->
+          <div class="card kpi-card locked" data-card-id="kpi-main">
+            <div class="card-header">
+              <h3>核心业务指标</h3>
+              <span class="update-time">更新于 10分钟前</span>
+            </div>
+            <div class="card-body">
+              <div class="kpi-grid" id="kpiGrid">
+                <!-- 动态渲染 -->
+              </div>
+            </div>
+          </div>
+
+          <!-- 趋势图表卡片 -->
+          <div class="card chart-card locked" data-card-id="trend-main">
+            <div class="card-header">
+              <h3>业务趋势分析</h3>
+              <div class="card-actions">
+                <select id="trendPeriod" class="layui-select-sm">
+                  <option value="7">近7天</option>
+                  <option value="30" selected>近30天</option>
+                  <option value="90">近90天</option>
+                </select>
+              </div>
+            </div>
+            <div class="card-body">
+              <div id="trendChart" class="chart-container"></div>
+            </div>
+          </div>
+
+          <!-- 数字化转型时间轴 -->
+          <div class="card timeline-card locked" data-card-id="timeline-main">
+            <div class="card-header">
+              <h3>数字化转型成果</h3>
+            </div>
+            <div class="card-body">
+              <div class="timeline" id="transformTimeline">
+                <!-- 动态渲染 -->
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 通知公告区域 - 固定 -->
+      <section class="notice-section">
+        <div class="card notice-card locked">
+          <div class="card-header">
+            <h3><i class="layui-icon layui-icon-notice"></i> 统一通知公告</h3>
+            <a href="javascript:;" class="more-link"
+              >查看全部 <i class="layui-icon layui-icon-right"></i
+            ></a>
+          </div>
+          <div class="card-body">
+            <div class="notice-list" id="noticeList">
+              <!-- 动态渲染 -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 快捷入口区域 - 固定 -->
+      <section class="shortcut-section">
+        <div class="card shortcut-card locked">
+          <div class="card-header">
+            <h3><i class="layui-icon layui-icon-app"></i> 快捷入口</h3>
+          </div>
+          <div class="card-body">
+            <div class="shortcut-grid" id="shortcutGrid">
+              <!-- 动态渲染 -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 可拖拽卡片区域 -->
+      <section class="draggable-section">
+        <div class="section-header">
+          <h2><i class="layui-icon layui-icon-slider"></i> 我的数据工作台</h2>
+          <div class="section-actions">
+            <button
+              class="layui-btn layui-btn-sm layui-btn-primary"
+              id="addCardBtn"
+            >
+              <i class="layui-icon layui-icon-add-1"></i> 添加卡片
+            </button>
+            <button class="layui-btn layui-btn-sm" id="saveLayoutBtn">
+              <i class="layui-icon layui-icon-ok"></i> 保存布局
+            </button>
+          </div>
+        </div>
+        <div class="draggable-cards" id="draggableCards">
+          <!-- 动态渲染可拖拽卡片 -->
+        </div>
+        <div
+          class="empty-placeholder"
+          id="emptyPlaceholder"
+          style="display: none"
+        >
+          <i class="layui-icon layui-icon-add-circle"></i>
+          <p>点击"添加卡片"开始构建您的个性化工作台</p>
+        </div>
+      </section>
+    </main>
+
+    <!-- 添加卡片弹窗 -->
+    <div id="addCardModal" class="modal-overlay" style="display: none">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h3>添加数据卡片</h3>
+          <i class="layui-icon layui-icon-close" id="closeAddModal"></i>
+        </div>
+        <div class="modal-body">
+          <div class="card-type-tabs">
+            <div class="tab-item active" data-type="chart">图表卡片</div>
+            <div class="tab-item" data-type="list">列表卡片</div>
+            <div class="tab-item" data-type="stat">统计卡片</div>
+            <div class="tab-item" data-type="custom">自定义卡片</div>
+          </div>
+          <div class="card-templates" id="cardTemplates">
+            <!-- 动态渲染卡片模板 -->
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 脚本引入 -->
+    <script type="module" src="./src/js/vendor.js"></script>
+    <script type="module" src="./src/js/pages/home.js"></script>
+  </body>
+</html>

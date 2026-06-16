@@ -1,0 +1,381 @@
+// ==========================================
+// 卡片工厂页面样式
+// ==========================================
+
+$primary-color: #1e9fff;
+$success-color: #5fb878;
+$warning-color: #ffb800;
+$danger-color: #ff5722;
+$bg-color: #f2f2f2;
+$card-bg: #ffffff;
+$border-color: #e6e6e6;
+$text-primary: #333333;
+$text-secondary: #666666;
+$text-muted: #999999;
+$shadow-card: 0 2px 12px rgba(0, 0, 0, 0.1);
+$radius-lg: 8px;
+$radius-md: 4px;
+$radius-sm: 2px;
+$spacing-xl: 24px;
+$spacing-lg: 16px;
+$spacing-md: 12px;
+$spacing-sm: 8px;
+$spacing-xs: 4px;
+$spacing-sm: 8px;
+
+.factory-main {
+  display: flex;
+  gap: $spacing-lg;
+  height: calc(100vh - 60px - 48px);
+  padding: $spacing-xl;
+}
+
+// 左侧配置面板
+.config-panel {
+  width: 280px;
+  flex-shrink: 0;
+  background: $card-bg;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  overflow-y: auto;
+  padding: $spacing-lg;
+
+  .panel-section {
+    margin-bottom: $spacing-xl;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .panel-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: $text-primary;
+    margin-bottom: $spacing-md;
+    padding-bottom: $spacing-sm;
+    border-bottom: 1px solid $border-color;
+    display: flex;
+    align-items: center;
+
+    i {
+      margin-right: $spacing-sm;
+      color: $primary-color;
+    }
+  }
+}
+
+// 图表类型选择
+.chart-types {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: $spacing-sm;
+
+  .chart-type-item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: $spacing-md $spacing-sm;
+    border: 1px solid $border-color;
+    border-radius: $radius-md;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    i {
+      font-size: 24px;
+      color: $text-muted;
+      margin-bottom: 4px;
+    }
+
+    span {
+      font-size: 12px;
+      color: $text-secondary;
+    }
+
+    &:hover {
+      border-color: $primary-color;
+      background: rgba($primary-color, 0.05);
+
+      i {
+        color: $primary-color;
+      }
+    }
+
+    &.active {
+      border-color: $primary-color;
+      background: rgba($primary-color, 0.1);
+
+      i {
+        color: $primary-color;
+      }
+
+      span {
+        color: $primary-color;
+        font-weight: 500;
+      }
+    }
+  }
+}
+
+// 配置表单
+.config-form {
+  .form-item {
+    margin-bottom: $spacing-md;
+
+    label {
+      display: block;
+      font-size: 13px;
+      color: $text-secondary;
+      margin-bottom: $spacing-xs;
+    }
+
+    .layui-input {
+      height: 32px;
+      line-height: 32px;
+      font-size: 13px;
+      border-radius: $radius-md;
+
+      &:focus {
+        border-color: $primary-color;
+      }
+    }
+
+    select.layui-input {
+      padding: 0 $spacing-sm;
+    }
+  }
+}
+
+// 颜色选择器
+.color-picker {
+  display: flex;
+  gap: $spacing-sm;
+
+  .color-item {
+    width: 28px;
+    height: 28px;
+    border-radius: $radius-md;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+
+    &:hover {
+      transform: scale(1.1);
+    }
+
+    &.active {
+      border-color: $text-primary;
+      box-shadow: 0 0 0 2px rgba(0, 0, 0, 0.1);
+    }
+  }
+}
+
+// 中间预览区
+.preview-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: $card-bg;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  overflow: hidden;
+
+  .preview-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $spacing-lg;
+    border-bottom: 1px solid $border-color;
+
+    h2 {
+      font-size: 16px;
+      font-weight: 600;
+      color: $text-primary;
+    }
+
+    .preview-actions {
+      display: flex;
+      gap: $spacing-sm;
+    }
+  }
+
+  .preview-content {
+    flex: 1;
+    padding: $spacing-xl;
+    background: $bg-color;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    .preview-card {
+      background: $card-bg;
+      border-radius: $radius-lg;
+      box-shadow: $shadow-card;
+      width: 100%;
+      max-width: 600px;
+      overflow: hidden;
+
+      .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: $spacing-lg;
+        border-bottom: 1px solid $border-color;
+
+        h3 {
+          font-size: 16px;
+          font-weight: 600;
+          color: $text-primary;
+        }
+
+        .update-time {
+          font-size: 12px;
+          color: $text-muted;
+        }
+      }
+
+      .card-body {
+        padding: $spacing-lg;
+
+        .preview-chart {
+          width: 100%;
+          height: 300px;
+        }
+      }
+    }
+  }
+
+  .preview-footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $spacing-md $spacing-lg;
+    border-top: 1px solid $border-color;
+    background: #fafafa;
+
+    .size-info {
+      font-size: 13px;
+      color: $text-secondary;
+
+      strong {
+        color: $primary-color;
+      }
+    }
+
+    .size-controls {
+      display: flex;
+      gap: $spacing-xs;
+    }
+  }
+}
+
+// 右侧数据面板
+.data-panel {
+  width: 300px;
+  flex-shrink: 0;
+  background: $card-bg;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  overflow-y: auto;
+  padding: $spacing-lg;
+
+  .panel-section {
+    margin-bottom: $spacing-xl;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .panel-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: $text-primary;
+    margin-bottom: $spacing-md;
+    padding-bottom: $spacing-sm;
+    border-bottom: 1px solid $border-color;
+    display: flex;
+    align-items: center;
+
+    i {
+      margin-right: $spacing-sm;
+      color: $primary-color;
+    }
+  }
+}
+
+// 数据表格
+.data-table-wrapper {
+  max-height: 250px;
+  overflow-y: auto;
+
+  .layui-table {
+    margin: 0;
+
+    th,
+    td {
+      padding: $spacing-sm;
+      font-size: 12px;
+    }
+
+    th {
+      background: #fafafa;
+      font-weight: 500;
+    }
+  }
+}
+
+// 代码预览
+.code-preview {
+  background: #2d2d2d;
+  border-radius: $radius-md;
+  padding: $spacing-md;
+  margin-bottom: $spacing-md;
+  max-height: 200px;
+  overflow: auto;
+
+  pre {
+    margin: 0;
+    font-family: "Monaco", "Menlo", monospace;
+    font-size: 11px;
+    color: #f8f8f2;
+    white-space: pre-wrap;
+    word-break: break-all;
+  }
+}
+
+// 开关样式覆盖
+.layui-form-switch {
+  height: 24px;
+  line-height: 24px;
+  min-width: 50px;
+}
+
+// 响应式
+@media (max-width: 1400px) {
+  .config-panel {
+    width: 240px;
+  }
+
+  .data-panel {
+    width: 260px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .factory-main {
+    flex-wrap: wrap;
+  }
+
+  .config-panel,
+  .data-panel {
+    width: 100%;
+    max-height: 300px;
+  }
+
+  .preview-panel {
+    order: -1;
+    width: 100%;
+    min-height: 400px;
+  }
+}

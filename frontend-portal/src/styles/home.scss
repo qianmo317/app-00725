@@ -1,0 +1,582 @@
+// ==========================================
+// 首页工作台样式
+// ==========================================
+
+$primary-color: #1e9fff;
+$success-color: #5fb878;
+$warning-color: #ffb800;
+$danger-color: #ff5722;
+$bg-color: #f2f2f2;
+$card-bg: #ffffff;
+$border-color: #e6e6e6;
+$text-primary: #333333;
+$text-secondary: #666666;
+$text-muted: #999999;
+$shadow-card: 0 2px 12px rgba(0, 0, 0, 0.1);
+$radius-lg: 8px;
+$radius-md: 4px;
+$radius-sm: 2px;
+$spacing-xl: 24px;
+$spacing-lg: 16px;
+$spacing-md: 12px;
+$spacing-sm: 8px;
+$spacing-xs: 4px;
+
+// 区域标题
+.section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: $spacing-lg;
+
+  h2 {
+    font-size: 18px;
+    font-weight: 600;
+    color: $text-primary;
+    display: flex;
+    align-items: center;
+
+    i {
+      margin-right: $spacing-sm;
+      color: $primary-color;
+    }
+  }
+
+  .lock-badge {
+    display: flex;
+    align-items: center;
+    padding: 4px 12px;
+    background: rgba($primary-color, 0.1);
+    color: $primary-color;
+    font-size: 12px;
+    border-radius: 20px;
+
+    i {
+      font-size: 12px;
+      margin-right: 4px;
+    }
+  }
+
+  .section-actions {
+    display: flex;
+    gap: $spacing-sm;
+  }
+}
+
+// 固定卡片区域
+.fixed-section {
+  margin-bottom: $spacing-xl;
+
+  .fixed-cards {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr 1fr;
+    gap: $spacing-lg;
+
+    @media (max-width: 1200px) {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+}
+
+// KPI 卡片
+.kpi-card {
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: $spacing-lg;
+
+    .kpi-item {
+      text-align: center;
+      padding: $spacing-md;
+      background: linear-gradient(135deg, #f8f9fa 0%, #fff 100%);
+      border-radius: $radius-md;
+      border: 1px solid $border-color;
+      transition: all 0.3s ease;
+
+      &:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+      }
+
+      .kpi-value {
+        font-size: 28px;
+        font-weight: 700;
+        color: $primary-color;
+        margin-bottom: 4px;
+
+        &.up {
+          color: $success-color;
+        }
+
+        &.down {
+          color: $danger-color;
+        }
+      }
+
+      .kpi-label {
+        font-size: 13px;
+        color: $text-secondary;
+      }
+
+      .kpi-trend {
+        font-size: 12px;
+        margin-top: 4px;
+
+        &.positive {
+          color: $success-color;
+        }
+
+        &.negative {
+          color: $danger-color;
+        }
+      }
+    }
+  }
+}
+
+// 时间轴卡片
+.timeline-card {
+  .timeline {
+    position: relative;
+    padding-left: 24px;
+
+    &::before {
+      content: "";
+      position: absolute;
+      left: 5px;
+      top: 0;
+      bottom: 0;
+      width: 2px;
+      background: linear-gradient(to bottom, $primary-color, #7fcfff);
+    }
+
+    .timeline-item {
+      position: relative;
+      padding-bottom: $spacing-lg;
+      padding-left: $spacing-lg;
+
+      &:last-child {
+        padding-bottom: 0;
+      }
+
+      &::before {
+        content: "";
+        position: absolute;
+        left: -24px;
+        top: 4px;
+        width: 12px;
+        height: 12px;
+        background: $primary-color;
+        border-radius: 50%;
+        border: 2px solid #fff;
+        box-shadow: 0 0 0 3px rgba($primary-color, 0.2);
+      }
+
+      .timeline-date {
+        font-size: 12px;
+        color: $text-muted;
+        margin-bottom: 4px;
+      }
+
+      .timeline-title {
+        font-size: 14px;
+        font-weight: 500;
+        color: $text-primary;
+        margin-bottom: 4px;
+      }
+
+      .timeline-desc {
+        font-size: 13px;
+        color: $text-secondary;
+        line-height: 1.5;
+      }
+    }
+  }
+}
+
+// 通知公告区域
+.notice-section {
+  margin-bottom: $spacing-xl;
+
+  .notice-card {
+    .notice-list {
+      .notice-item {
+        display: flex;
+        align-items: flex-start;
+        padding: $spacing-md 0;
+        border-bottom: 1px dashed $border-color;
+        cursor: pointer;
+        transition: all 0.3s ease;
+
+        &:last-child {
+          border-bottom: none;
+        }
+
+        &:hover {
+          background: rgba($primary-color, 0.02);
+          margin: 0 (-$spacing-lg);
+          padding-left: $spacing-lg;
+          padding-right: $spacing-lg;
+
+          .notice-title {
+            color: $primary-color;
+          }
+        }
+
+        .notice-tag {
+          flex-shrink: 0;
+          padding: 2px 8px;
+          font-size: 12px;
+          border-radius: $radius-sm;
+          margin-right: $spacing-md;
+
+          &.important {
+            background: rgba($danger-color, 0.1);
+            color: $danger-color;
+          }
+
+          &.normal {
+            background: rgba($primary-color, 0.1);
+            color: $primary-color;
+          }
+
+          &.system {
+            background: rgba($text-muted, 0.1);
+            color: $text-muted;
+          }
+        }
+
+        .notice-content {
+          flex: 1;
+          min-width: 0;
+
+          .notice-title {
+            font-size: 14px;
+            color: $text-primary;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            transition: color 0.3s ease;
+          }
+
+          .notice-meta {
+            font-size: 12px;
+            color: $text-muted;
+            margin-top: 4px;
+          }
+        }
+
+        .notice-date {
+          flex-shrink: 0;
+          font-size: 12px;
+          color: $text-muted;
+          margin-left: $spacing-lg;
+        }
+      }
+    }
+  }
+}
+
+// 快捷入口区域
+.shortcut-section {
+  margin-bottom: $spacing-xl;
+
+  .shortcut-grid {
+    display: grid;
+    grid-template-columns: repeat(8, 1fr);
+    gap: $spacing-lg;
+
+    @media (max-width: 1200px) {
+      grid-template-columns: repeat(6, 1fr);
+    }
+
+    @media (max-width: 768px) {
+      grid-template-columns: repeat(4, 1fr);
+    }
+
+    .shortcut-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: $spacing-lg $spacing-sm;
+      cursor: pointer;
+      border-radius: $radius-md;
+      transition: all 0.3s ease;
+
+      &:hover {
+        background: rgba($primary-color, 0.05);
+        transform: translateY(-2px);
+
+        .shortcut-icon {
+          transform: scale(1.1);
+        }
+      }
+
+      .shortcut-icon {
+        width: 48px;
+        height: 48px;
+        border-radius: $radius-lg;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: $spacing-sm;
+        transition: transform 0.3s ease;
+
+        i {
+          font-size: 24px;
+          color: #fff;
+        }
+
+        &.blue {
+          background: linear-gradient(135deg, #1e9fff, #0d8bf2);
+        }
+        &.green {
+          background: linear-gradient(135deg, #5fb878, #4caf50);
+        }
+        &.orange {
+          background: linear-gradient(135deg, #ffb800, #ff9800);
+        }
+        &.red {
+          background: linear-gradient(135deg, #ff5722, #f44336);
+        }
+        &.purple {
+          background: linear-gradient(135deg, #9c27b0, #7b1fa2);
+        }
+        &.cyan {
+          background: linear-gradient(135deg, #00bcd4, #0097a7);
+        }
+        &.pink {
+          background: linear-gradient(135deg, #e91e63, #c2185b);
+        }
+        &.teal {
+          background: linear-gradient(135deg, #009688, #00796b);
+        }
+      }
+
+      .shortcut-name {
+        font-size: 13px;
+        color: $text-secondary;
+        text-align: center;
+      }
+    }
+  }
+}
+
+// 可拖拽卡片区域
+.draggable-section {
+  .draggable-cards {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: $spacing-lg;
+    min-height: 200px;
+
+    @media (max-width: 1200px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+
+    .draggable-card {
+      position: relative;
+      cursor: move;
+      transition: all 0.3s ease;
+
+      &:hover {
+        .card-toolbar {
+          opacity: 1;
+        }
+      }
+
+      &.dragging {
+        opacity: 0.5;
+        transform: scale(1.02);
+      }
+
+      &.ghost {
+        opacity: 0.3;
+        background: rgba($primary-color, 0.1);
+      }
+
+      .card-toolbar {
+        position: absolute;
+        top: $spacing-sm;
+        right: $spacing-sm;
+        display: flex;
+        gap: 4px;
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        z-index: 10;
+
+        .toolbar-btn {
+          width: 28px;
+          height: 28px;
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          background: rgba(0, 0, 0, 0.6);
+          color: #fff;
+          border-radius: $radius-md;
+          cursor: pointer;
+          transition: all 0.3s ease;
+
+          &:hover {
+            background: $primary-color;
+          }
+
+          &.delete:hover {
+            background: $danger-color;
+          }
+        }
+      }
+    }
+  }
+
+  .empty-placeholder {
+    grid-column: 1 / -1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: $spacing-xl * 3;
+    background: rgba($primary-color, 0.02);
+    border: 2px dashed $border-color;
+    border-radius: $radius-lg;
+    color: $text-muted;
+    cursor: pointer;
+    transition: all 0.3s ease;
+
+    &:hover {
+      border-color: $primary-color;
+      background: rgba($primary-color, 0.05);
+
+      i {
+        color: $primary-color;
+      }
+    }
+
+    i {
+      font-size: 48px;
+      margin-bottom: $spacing-lg;
+      transition: color 0.3s ease;
+    }
+
+    p {
+      font-size: 14px;
+    }
+  }
+}
+
+// 添加卡片弹窗
+#addCardModal {
+  .card-type-tabs {
+    display: flex;
+    gap: $spacing-sm;
+    margin-bottom: $spacing-xl;
+    border-bottom: 1px solid $border-color;
+    padding-bottom: $spacing-md;
+
+    .tab-item {
+      padding: $spacing-sm $spacing-lg;
+      cursor: pointer;
+      border-radius: $radius-md $radius-md 0 0;
+      transition: all 0.3s ease;
+      color: $text-secondary;
+
+      &:hover {
+        background: rgba($primary-color, 0.05);
+        color: $primary-color;
+      }
+
+      &.active {
+        background: $primary-color;
+        color: #fff;
+      }
+    }
+  }
+
+  .card-templates {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: $spacing-lg;
+
+    .template-item {
+      border: 1px solid $border-color;
+      border-radius: $radius-lg;
+      padding: $spacing-lg;
+      cursor: pointer;
+      transition: all 0.3s ease;
+
+      &:hover {
+        border-color: $primary-color;
+        box-shadow: 0 4px 12px rgba($primary-color, 0.15);
+        transform: translateY(-2px);
+      }
+
+      .template-preview {
+        height: 120px;
+        background: $bg-color;
+        border-radius: $radius-md;
+        margin-bottom: $spacing-md;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        overflow: hidden;
+
+        img {
+          max-width: 100%;
+          max-height: 100%;
+        }
+
+        i {
+          font-size: 48px;
+          color: $text-muted;
+        }
+      }
+
+      .template-name {
+        font-size: 14px;
+        font-weight: 500;
+        color: $text-primary;
+        margin-bottom: 4px;
+      }
+
+      .template-desc {
+        font-size: 12px;
+        color: $text-muted;
+      }
+    }
+  }
+}
+
+// 编辑模式样式
+.edit-mode {
+  .draggable-card {
+    border: 2px dashed $primary-color;
+
+    .card-toolbar {
+      opacity: 1;
+    }
+  }
+
+  .locked {
+    &::after {
+      content: "锁定";
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.7);
+      color: #fff;
+      padding: $spacing-sm $spacing-lg;
+      border-radius: $radius-md;
+      font-size: 12px;
+      z-index: 100;
+    }
+  }
+}

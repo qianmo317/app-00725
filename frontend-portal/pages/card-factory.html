@@ -1,0 +1,323 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>数据应用门户 - 卡片工厂</title>
+    <link rel="stylesheet" href="../src/styles/main.scss" />
+    <link rel="stylesheet" href="../src/styles/card-factory.scss" />
+  </head>
+  <body class="portal-body">
+    <!-- 顶部导航 -->
+    <header class="portal-header">
+      <div class="header-left">
+        <div class="logo">
+          <i class="layui-icon layui-icon-app"></i>
+          <span>数据应用门户</span>
+        </div>
+      </div>
+      <button class="mobile-menu-btn" id="mobileMenuBtn">
+        <i class="layui-icon layui-icon-spread-left"></i>
+      </button>
+      <div class="header-center" id="headerNav">
+        <ul class="nav-menu">
+          <li class="nav-item" data-page="home">
+            <i class="layui-icon layui-icon-home"></i>
+            <span>首页工作台</span>
+          </li>
+          <li class="nav-item active" data-page="card-factory">
+            <i class="layui-icon layui-icon-chart"></i>
+            <span>卡片工厂</span>
+          </li>
+          <li class="nav-item" data-page="app-market">
+            <i class="layui-icon layui-icon-template-1"></i>
+            <span>应用广场</span>
+          </li>
+          <li class="nav-item" data-page="designer">
+            <i class="layui-icon layui-icon-edit"></i>
+            <span>低代码设计器</span>
+          </li>
+          <li class="nav-item" data-page="map">
+            <i class="layui-icon layui-icon-location"></i>
+            <span>地图服务</span>
+          </li>
+        </ul>
+      </div>
+      <div class="header-right">
+        <div class="user-info">
+          <img
+            src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzNiIgaGVpZ2h0PSIzNiIgdmlld0JveD0iMCAwIDM2IDM2Ij48cmVjdCBmaWxsPSIjMWU5ZmZmIiB3aWR0aD0iMzYiIGhlaWdodD0iMzYiIHJ4PSIxOCIvPjx0ZXh0IGZpbGw9IiNmZmYiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZm9udC13ZWlnaHQ9ImJvbGQiIHg9IjUwJSIgeT0iNTAlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjM1ZW0iPuW8oDwvdGV4dD48L3N2Zz4="
+            alt="avatar"
+            class="avatar"
+          />
+          <span class="username">张三</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="portal-main factory-main">
+      <!-- 左侧配置面板 -->
+      <aside class="config-panel">
+        <div class="panel-section">
+          <h3 class="panel-title">
+            <i class="layui-icon layui-icon-chart"></i>
+            图表类型
+          </h3>
+          <div class="chart-types" id="chartTypes">
+            <div class="chart-type-item active" data-type="line">
+              <i class="layui-icon layui-icon-chart"></i>
+              <span>折线图</span>
+            </div>
+            <div class="chart-type-item" data-type="bar">
+              <i class="layui-icon layui-icon-chart-screen"></i>
+              <span>柱状图</span>
+            </div>
+            <div class="chart-type-item" data-type="pie">
+              <i class="layui-icon layui-icon-chart"></i>
+              <span>饼图</span>
+            </div>
+            <div class="chart-type-item" data-type="area">
+              <i class="layui-icon layui-icon-chart"></i>
+              <span>面积图</span>
+            </div>
+            <div class="chart-type-item" data-type="radar">
+              <i class="layui-icon layui-icon-chart"></i>
+              <span>雷达图</span>
+            </div>
+            <div class="chart-type-item" data-type="gauge">
+              <i class="layui-icon layui-icon-rate"></i>
+              <span>仪表盘</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h3 class="panel-title">
+            <i class="layui-icon layui-icon-set"></i>
+            数据配置
+          </h3>
+          <div class="config-form">
+            <div class="form-item">
+              <label>卡片标题</label>
+              <input
+                type="text"
+                id="cardTitle"
+                class="layui-input"
+                value="数据分析图表"
+                placeholder="请输入卡片标题"
+              />
+            </div>
+            <div class="form-item">
+              <label>数据源</label>
+              <select id="dataSource" class="layui-input">
+                <option value="demo">示例数据</option>
+                <option value="user_behavior">用户行为数据</option>
+                <option value="business_kpi">业务指标数据</option>
+                <option value="sales_stats">销售统计数据</option>
+              </select>
+            </div>
+            <div class="form-item">
+              <label>刷新频率</label>
+              <select id="refreshRate" class="layui-input">
+                <option value="0">不自动刷新</option>
+                <option value="30">30秒</option>
+                <option value="60">1分钟</option>
+                <option value="300">5分钟</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h3 class="panel-title">
+            <i class="layui-icon layui-icon-theme"></i>
+            样式设置
+          </h3>
+          <div class="config-form">
+            <div class="form-item">
+              <label>主题色</label>
+              <div class="color-picker">
+                <div
+                  class="color-item active"
+                  data-color="#1E9FFF"
+                  style="background: #1e9fff"
+                ></div>
+                <div
+                  class="color-item"
+                  data-color="#5FB878"
+                  style="background: #5fb878"
+                ></div>
+                <div
+                  class="color-item"
+                  data-color="#FFB800"
+                  style="background: #ffb800"
+                ></div>
+                <div
+                  class="color-item"
+                  data-color="#FF5722"
+                  style="background: #ff5722"
+                ></div>
+                <div
+                  class="color-item"
+                  data-color="#9c27b0"
+                  style="background: #9c27b0"
+                ></div>
+              </div>
+            </div>
+            <div class="form-item">
+              <label>显示图例</label>
+              <input
+                type="checkbox"
+                id="showLegend"
+                checked
+                lay-skin="switch"
+                lay-text="是|否"
+              />
+            </div>
+            <div class="form-item">
+              <label>显示标签</label>
+              <input
+                type="checkbox"
+                id="showLabel"
+                lay-skin="switch"
+                lay-text="是|否"
+              />
+            </div>
+            <div class="form-item">
+              <label>平滑曲线</label>
+              <input
+                type="checkbox"
+                id="smoothLine"
+                checked
+                lay-skin="switch"
+                lay-text="是|否"
+              />
+            </div>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h3 class="panel-title">
+            <i class="layui-icon layui-icon-link"></i>
+            交互配置
+          </h3>
+          <div class="config-form">
+            <div class="form-item">
+              <label>点击事件</label>
+              <select id="clickAction" class="layui-input">
+                <option value="none">无</option>
+                <option value="drill">下钻查看</option>
+                <option value="link">跳转链接</option>
+                <option value="filter">联动筛选</option>
+              </select>
+            </div>
+            <div class="form-item">
+              <label>提示框</label>
+              <input
+                type="checkbox"
+                id="showTooltip"
+                checked
+                lay-skin="switch"
+                lay-text="是|否"
+              />
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- 中间预览区 -->
+      <section class="preview-panel">
+        <div class="preview-header">
+          <h2>图表预览</h2>
+          <div class="preview-actions">
+            <button
+              class="layui-btn layui-btn-sm layui-btn-primary"
+              id="refreshPreview"
+            >
+              <i class="layui-icon layui-icon-refresh"></i> 刷新
+            </button>
+            <button class="layui-btn layui-btn-sm" id="saveCard">
+              <i class="layui-icon layui-icon-ok"></i> 保存卡片
+            </button>
+            <button
+              class="layui-btn layui-btn-sm layui-btn-normal"
+              id="addToWorkspace"
+            >
+              <i class="layui-icon layui-icon-add-1"></i> 添加到工作台
+            </button>
+          </div>
+        </div>
+        <div class="preview-content">
+          <div class="preview-card">
+            <div class="card-header">
+              <h3 id="previewTitle">数据分析图表</h3>
+              <span class="update-time">实时预览</span>
+            </div>
+            <div class="card-body">
+              <div id="previewChart" class="preview-chart"></div>
+            </div>
+          </div>
+        </div>
+        <div class="preview-footer">
+          <div class="size-info">
+            <span>卡片尺寸: <strong>400 x 300</strong></span>
+          </div>
+          <div class="size-controls">
+            <button class="layui-btn layui-btn-xs" data-size="small">小</button>
+            <button
+              class="layui-btn layui-btn-xs layui-btn-normal"
+              data-size="medium"
+            >
+              中
+            </button>
+            <button class="layui-btn layui-btn-xs" data-size="large">大</button>
+          </div>
+        </div>
+      </section>
+
+      <!-- 右侧数据面板 -->
+      <aside class="data-panel">
+        <div class="panel-section">
+          <h3 class="panel-title">
+            <i class="layui-icon layui-icon-table"></i>
+            数据预览
+          </h3>
+          <div class="data-table-wrapper">
+            <table class="layui-table" id="dataTable">
+              <thead>
+                <tr>
+                  <th>类别</th>
+                  <th>数值</th>
+                </tr>
+              </thead>
+              <tbody id="dataTableBody">
+                <!-- 动态渲染 -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="panel-section">
+          <h3 class="panel-title">
+            <i class="layui-icon layui-icon-code-circle"></i>
+            配置代码
+          </h3>
+          <div class="code-preview">
+            <pre id="configCode"></pre>
+          </div>
+          <button
+            class="layui-btn layui-btn-sm layui-btn-fluid"
+            id="copyConfig"
+          >
+            <i class="layui-icon layui-icon-file"></i> 复制配置
+          </button>
+        </div>
+      </aside>
+    </main>
+
+    <!-- 脚本引入 -->
+    <script type="module" src="../src/js/vendor.js"></script>
+    <script type="module" src="../src/js/pages/card-factory.js"></script>
+  </body>
+</html>

@@ -1,0 +1,231 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>数据应用门户 - 地图服务</title>
+    <link rel="stylesheet" href="../src/styles/main.scss" />
+    <link rel="stylesheet" href="../src/styles/map.scss" />
+  </head>
+  <body class="portal-body">
+    <!-- 顶部导航 -->
+    <header class="portal-header">
+      <div class="header-left">
+        <div class="logo">
+          <i class="layui-icon layui-icon-app"></i>
+          <span>数据应用门户</span>
+        </div>
+      </div>
+      <button class="mobile-menu-btn" id="mobileMenuBtn">
+        <i class="layui-icon layui-icon-spread-left"></i>
+      </button>
+      <div class="header-center" id="headerNav">
+        <ul class="nav-menu">
+          <li class="nav-item" data-page="home">
+            <i class="layui-icon layui-icon-home"></i>
+            <span>首页工作台</span>
+          </li>
+          <li class="nav-item" data-page="card-factory">
+            <i class="layui-icon layui-icon-chart"></i>
+            <span>卡片工厂</span>
+          </li>
+          <li class="nav-item" data-page="app-market">
+            <i class="layui-icon layui-icon-template-1"></i>
+            <span>应用广场</span>
+          </li>
+          <li class="nav-item" data-page="designer">
+            <i class="layui-icon layui-icon-edit"></i>
+            <span>低代码设计器</span>
+          </li>
+          <li class="nav-item active" data-page="map">
+            <i class="layui-icon layui-icon-location"></i>
+            <span>地图服务</span>
+          </li>
+        </ul>
+      </div>
+      <div class="header-right">
+        <div class="user-info">
+          <img
+            src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzNiIgaGVpZ2h0PSIzNiIgdmlld0JveD0iMCAwIDM2IDM2Ij48cmVjdCBmaWxsPSIjMWU5ZmZmIiB3aWR0aD0iMzYiIGhlaWdodD0iMzYiIHJ4PSIxOCIvPjx0ZXh0IGZpbGw9IiNmZmYiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZm9udC13ZWlnaHQ9ImJvbGQiIHg9IjUwJSIgeT0iNTAlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjM1ZW0iPuW8oDwvdGV4dD48L3N2Zz4="
+            alt="avatar"
+            class="avatar"
+          />
+          <span class="username">张三</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="portal-main map-main">
+      <!-- 左侧控制面板 -->
+      <aside class="map-sidebar">
+        <div class="sidebar-section">
+          <h3 class="section-title">
+            <i class="layui-icon layui-icon-location"></i>
+            分支机构
+          </h3>
+          <div class="location-list" id="locationList">
+            <!-- 动态渲染 -->
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <h3 class="section-title">
+            <i class="layui-icon layui-icon-chart"></i>
+            区域统计
+          </h3>
+          <div class="region-stats" id="regionStats">
+            <!-- 动态渲染 -->
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <h3 class="section-title">
+            <i class="layui-icon layui-icon-set"></i>
+            图层控制
+          </h3>
+          <div class="layer-controls">
+            <div class="layer-item">
+              <input
+                type="checkbox"
+                id="layerPoints"
+                checked
+                lay-skin="switch"
+                lay-text="开|关"
+              />
+              <label for="layerPoints">标记点</label>
+            </div>
+            <div class="layer-item">
+              <input
+                type="checkbox"
+                id="layerHeatmap"
+                lay-skin="switch"
+                lay-text="开|关"
+              />
+              <label for="layerHeatmap">热力图</label>
+            </div>
+            <div class="layer-item">
+              <input
+                type="checkbox"
+                id="layerCluster"
+                lay-skin="switch"
+                lay-text="开|关"
+              />
+              <label for="layerCluster">聚合显示</label>
+            </div>
+          </div>
+        </div>
+
+        <div class="sidebar-section">
+          <h3 class="section-title">
+            <i class="layui-icon layui-icon-theme"></i>
+            地图样式
+          </h3>
+          <div class="map-styles">
+            <div class="style-item active" data-style="standard">
+              <div class="style-preview standard"></div>
+              <span>标准</span>
+            </div>
+            <div class="style-item" data-style="satellite">
+              <div class="style-preview satellite"></div>
+              <span>卫星</span>
+            </div>
+            <div class="style-item" data-style="dark">
+              <div class="style-preview dark"></div>
+              <span>暗黑</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- 地图区域 -->
+      <section class="map-container">
+        <div class="map-toolbar">
+          <div class="search-box">
+            <i class="layui-icon layui-icon-search"></i>
+            <input
+              type="text"
+              id="mapSearch"
+              placeholder="搜索地点..."
+              class="search-input"
+            />
+          </div>
+          <div class="toolbar-actions">
+            <button class="toolbar-btn" id="zoomIn" title="放大">
+              <i class="layui-icon layui-icon-addition"></i>
+            </button>
+            <button class="toolbar-btn" id="zoomOut" title="缩小">
+              <i class="layui-icon layui-icon-subtraction"></i>
+            </button>
+            <button class="toolbar-btn" id="resetView" title="重置视图">
+              <i class="layui-icon layui-icon-refresh"></i>
+            </button>
+            <button class="toolbar-btn" id="fullscreen" title="全屏">
+              <i class="layui-icon layui-icon-screen-full"></i>
+            </button>
+          </div>
+        </div>
+        <div id="map" class="map-view"></div>
+        <div class="map-legend">
+          <h4>图例</h4>
+          <div class="legend-item">
+            <span class="legend-marker high"></span>
+            <span>高业务量 (&gt;1000)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-marker medium"></span>
+            <span>中业务量 (500-1000)</span>
+          </div>
+          <div class="legend-item">
+            <span class="legend-marker low"></span>
+            <span>低业务量 (&lt;500)</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- 右侧信息面板 -->
+      <aside class="info-panel" id="infoPanel">
+        <div class="panel-header">
+          <h3>详细信息</h3>
+          <i class="layui-icon layui-icon-close" id="closeInfoPanel"></i>
+        </div>
+        <div class="panel-body">
+          <div class="info-placeholder">
+            <i class="layui-icon layui-icon-location"></i>
+            <p>点击地图上的标记点查看详情</p>
+          </div>
+          <div class="info-content" id="infoContent" style="display: none">
+            <div class="info-header">
+              <h4 id="infoName">-</h4>
+              <span class="info-badge" id="infoBadge">-</span>
+            </div>
+            <div class="info-stats">
+              <div class="stat-item">
+                <span class="stat-value" id="infoValue">-</span>
+                <span class="stat-label">业务量</span>
+              </div>
+              <div class="stat-item">
+                <span class="stat-value" id="infoRank">-</span>
+                <span class="stat-label">排名</span>
+              </div>
+            </div>
+            <div class="info-chart">
+              <h5>近7日趋势</h5>
+              <div id="infoTrendChart" style="height: 150px"></div>
+            </div>
+            <div class="info-actions">
+              <button class="layui-btn layui-btn-sm">查看详情</button>
+              <button class="layui-btn layui-btn-sm layui-btn-primary">
+                导出数据
+              </button>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- 脚本引入 -->
+    <script type="module" src="../src/js/vendor.js"></script>
+    <script type="module" src="../src/js/pages/map.js"></script>
+  </body>
+</html>

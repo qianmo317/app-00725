@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>数据应用门户 - 低代码设计器</title>
+    <link rel="stylesheet" href="../src/styles/main.scss" />
+    <link rel="stylesheet" href="../src/styles/designer.scss" />
+  </head>
+  <body class="portal-body">
+    <!-- 顶部导航 -->
+    <header class="portal-header">
+      <div class="header-left">
+        <div class="logo">
+          <i class="layui-icon layui-icon-app"></i>
+          <span>数据应用门户</span>
+        </div>
+      </div>
+      <button class="mobile-menu-btn" id="mobileMenuBtn">
+        <i class="layui-icon layui-icon-spread-left"></i>
+      </button>
+      <div class="header-center" id="headerNav">
+        <ul class="nav-menu">
+          <li class="nav-item" data-page="home">
+            <i class="layui-icon layui-icon-home"></i>
+            <span>首页工作台</span>
+          </li>
+          <li class="nav-item" data-page="card-factory">
+            <i class="layui-icon layui-icon-chart"></i>
+            <span>卡片工厂</span>
+          </li>
+          <li class="nav-item" data-page="app-market">
+            <i class="layui-icon layui-icon-template-1"></i>
+            <span>应用广场</span>
+          </li>
+          <li class="nav-item active" data-page="designer">
+            <i class="layui-icon layui-icon-edit"></i>
+            <span>低代码设计器</span>
+          </li>
+          <li class="nav-item" data-page="map">
+            <i class="layui-icon layui-icon-location"></i>
+            <span>地图服务</span>
+          </li>
+        </ul>
+      </div>
+      <div class="header-right">
+        <div class="designer-actions">
+          <button class="layui-btn layui-btn-sm layui-btn-primary" id="undoBtn">
+            <i class="layui-icon layui-icon-left"></i> 撤销
+          </button>
+          <button class="layui-btn layui-btn-sm layui-btn-primary" id="redoBtn">
+            <i class="layui-icon layui-icon-right"></i> 重做
+          </button>
+          <button class="layui-btn layui-btn-sm" id="previewBtn">
+            <i class="layui-icon layui-icon-release"></i> 预览
+          </button>
+          <button class="layui-btn layui-btn-sm layui-btn-normal" id="saveBtn">
+            <i class="layui-icon layui-icon-ok"></i> 保存
+          </button>
+          <button class="layui-btn layui-btn-sm layui-btn-warm" id="exportBtn">
+            <i class="layui-icon layui-icon-export"></i> 导出
+          </button>
+        </div>
+        <div class="user-info">
+          <img
+            src="data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIzNiIgaGVpZ2h0PSIzNiIgdmlld0JveD0iMCAwIDM2IDM2Ij48cmVjdCBmaWxsPSIjMWU5ZmZmIiB3aWR0aD0iMzYiIGhlaWdodD0iMzYiIHJ4PSIxOCIvPjx0ZXh0IGZpbGw9IiNmZmYiIGZvbnQtZmFtaWx5PSJBcmlhbCwgc2Fucy1zZXJpZiIgZm9udC1zaXplPSIxOCIgZm9udC13ZWlnaHQ9ImJvbGQiIHg9IjUwJSIgeT0iNTAlIiB0ZXh0LWFuY2hvcj0ibWlkZGxlIiBkeT0iLjM1ZW0iPuW8oDwvdGV4dD48L3N2Zz4="
+            alt="avatar"
+            class="avatar"
+          />
+          <span class="username">张三</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- 主内容区 -->
+    <main class="portal-main designer-main">
+      <!-- 左侧组件面板 -->
+      <aside class="component-panel" id="componentPanel">
+        <div class="panel-header">
+          <h3>组件库</h3>
+        </div>
+        <div class="panel-body" id="blocksContainer">
+          <!-- GrapesJS BlockManager 将在这里渲染组件 -->
+        </div>
+      </aside>
+
+      <!-- 中间画布区 -->
+      <section class="canvas-panel">
+        <div class="canvas-toolbar">
+          <div class="device-switcher">
+            <button
+              class="device-btn active"
+              data-device="desktop"
+              title="桌面端"
+            >
+              <i class="layui-icon layui-icon-screen-full"></i>
+            </button>
+            <button class="device-btn" data-device="tablet" title="平板">
+              <i class="layui-icon layui-icon-cellphone"></i>
+            </button>
+            <button class="device-btn" data-device="mobile" title="手机">
+              <i class="layui-icon layui-icon-cellphone"></i>
+            </button>
+          </div>
+          <div class="zoom-controls">
+            <button class="zoom-btn" id="zoomOut">
+              <i class="layui-icon layui-icon-subtraction"></i>
+            </button>
+            <span class="zoom-value" id="zoomValue">100%</span>
+            <button class="zoom-btn" id="zoomIn">
+              <i class="layui-icon layui-icon-addition"></i>
+            </button>
+          </div>
+          <div class="canvas-info">
+            <span id="canvasSize">1200 x 800</span>
+          </div>
+        </div>
+        <div class="canvas-wrapper">
+          <div id="gjs"></div>
+        </div>
+      </section>
+
+      <!-- 右侧属性面板 -->
+      <aside class="property-panel" id="propertyPanel">
+        <div class="panel-tabs">
+          <div class="tab-item active" data-tab="style">样式</div>
+          <div class="tab-item" data-tab="layers">图层</div>
+        </div>
+        <div class="panel-content">
+          <div class="tab-content active" id="stylePanel">
+            <div id="styles-container"></div>
+          </div>
+          <div class="tab-content" id="layersPanel">
+            <div id="layers-container"></div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <!-- 预览弹窗 -->
+    <div id="previewModal" class="modal-overlay" style="display: none">
+      <div class="modal-content preview-modal">
+        <div class="modal-header">
+          <h3>页面预览</h3>
+          <i class="layui-icon layui-icon-close" id="closePreviewModal"></i>
+        </div>
+        <div class="modal-body">
+          <iframe id="previewFrame" frameborder="0"></iframe>
+        </div>
+      </div>
+    </div>
+
+    <!-- 脚本引入 -->
+    <script type="module" src="../src/js/vendor-designer.js"></script>
+    <script type="module" src="../src/js/pages/designer.js"></script>
+  </body>
+</html>

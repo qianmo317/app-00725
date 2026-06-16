@@ -1,0 +1,554 @@
+// ==========================================
+// 地图服务页面样式
+// ==========================================
+
+// 导入 OpenLayers 样式
+@import "ol/ol.css";
+
+$primary-color: #1e9fff;
+$success-color: #5fb878;
+$warning-color: #ffb800;
+$danger-color: #ff5722;
+$bg-color: #f2f2f2;
+$card-bg: #ffffff;
+$border-color: #e6e6e6;
+$text-primary: #333333;
+$text-secondary: #666666;
+$text-muted: #999999;
+$shadow-card: 0 2px 12px rgba(0, 0, 0, 0.1);
+$radius-lg: 8px;
+$radius-md: 4px;
+$radius-sm: 2px;
+$spacing-xl: 24px;
+$spacing-lg: 16px;
+$spacing-md: 12px;
+$spacing-sm: 8px;
+$spacing-xs: 4px;
+
+.map-main {
+  display: flex;
+  height: calc(100vh - 60px);
+  padding: 0;
+  gap: 0;
+  overflow: hidden;
+}
+
+// 左侧控制面板
+.map-sidebar {
+  width: 280px;
+  flex-shrink: 0;
+  background: $card-bg;
+  border-right: 1px solid $border-color;
+  overflow-y: auto;
+  padding: $spacing-lg;
+
+  .sidebar-section {
+    margin-bottom: $spacing-xl;
+
+    &:last-child {
+      margin-bottom: 0;
+    }
+  }
+
+  .section-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: $text-primary;
+    margin-bottom: $spacing-md;
+    display: flex;
+    align-items: center;
+
+    i {
+      margin-right: $spacing-sm;
+      color: $primary-color;
+    }
+  }
+}
+
+// 位置列表
+.location-list {
+  .location-item {
+    display: flex;
+    align-items: center;
+    padding: $spacing-md;
+    border-radius: $radius-md;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    margin-bottom: $spacing-sm;
+
+    &:hover {
+      background: rgba($primary-color, 0.05);
+    }
+
+    &.active {
+      background: rgba($primary-color, 0.1);
+      border-left: 3px solid $primary-color;
+    }
+
+    .location-marker {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      margin-right: $spacing-md;
+
+      &.high {
+        background: $danger-color;
+      }
+      &.medium {
+        background: $warning-color;
+      }
+      &.low {
+        background: $success-color;
+      }
+    }
+
+    .location-info {
+      flex: 1;
+
+      .location-name {
+        font-size: 14px;
+        color: $text-primary;
+        font-weight: 500;
+      }
+
+      .location-value {
+        font-size: 12px;
+        color: $text-muted;
+        margin-top: 2px;
+      }
+    }
+  }
+}
+
+// 区域统计
+.region-stats {
+  .region-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $spacing-sm 0;
+    border-bottom: 1px dashed $border-color;
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .region-name {
+      font-size: 13px;
+      color: $text-secondary;
+    }
+
+    .region-value {
+      font-size: 14px;
+      font-weight: 600;
+      color: $primary-color;
+    }
+
+    .region-bar {
+      flex: 1;
+      height: 6px;
+      background: $bg-color;
+      border-radius: 3px;
+      margin: 0 $spacing-md;
+      overflow: hidden;
+
+      .bar-fill {
+        height: 100%;
+        background: linear-gradient(90deg, $primary-color, #5fbfff);
+        border-radius: 3px;
+        transition: width 0.5s ease;
+      }
+    }
+  }
+}
+
+// 图层控制
+.layer-controls {
+  .layer-item {
+    display: flex;
+    align-items: center;
+    padding: $spacing-sm 0;
+
+    label {
+      margin-left: $spacing-md;
+      font-size: 13px;
+      color: $text-secondary;
+      cursor: pointer;
+    }
+  }
+}
+
+// 地图样式选择
+.map-styles {
+  display: flex;
+  gap: $spacing-sm;
+
+  .style-item {
+    flex: 1;
+    text-align: center;
+    cursor: pointer;
+    padding: $spacing-sm;
+    border-radius: $radius-md;
+    transition: all 0.3s ease;
+
+    &:hover {
+      background: rgba($primary-color, 0.05);
+    }
+
+    &.active {
+      background: rgba($primary-color, 0.1);
+
+      .style-preview {
+        border-color: $primary-color;
+      }
+
+      span {
+        color: $primary-color;
+        font-weight: 500;
+      }
+    }
+
+    .style-preview {
+      width: 100%;
+      height: 40px;
+      border-radius: $radius-md;
+      border: 2px solid $border-color;
+      margin-bottom: $spacing-xs;
+
+      &.standard {
+        background: linear-gradient(135deg, #e8f4f8 0%, #d4e5ed 100%);
+      }
+
+      &.satellite {
+        background: linear-gradient(135deg, #2d5016 0%, #1a3a0a 100%);
+      }
+
+      &.dark {
+        background: linear-gradient(135deg, #2d2d2d 0%, #1a1a1a 100%);
+      }
+    }
+
+    span {
+      font-size: 12px;
+      color: $text-secondary;
+    }
+  }
+}
+
+// 地图容器
+.map-container {
+  flex: 1;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+
+  .map-toolbar {
+    position: absolute;
+    top: $spacing-lg;
+    left: $spacing-lg;
+    right: $spacing-lg;
+    display: flex;
+    justify-content: space-between;
+    z-index: 100;
+    pointer-events: none;
+
+    > * {
+      pointer-events: auto;
+    }
+
+    .search-box {
+      display: flex;
+      align-items: center;
+      background: $card-bg;
+      border-radius: $radius-md;
+      padding: 0 $spacing-md;
+      box-shadow: $shadow-card;
+      width: 300px;
+
+      i {
+        color: $text-muted;
+      }
+
+      .search-input {
+        flex: 1;
+        border: none;
+        padding: $spacing-md;
+        font-size: 14px;
+        outline: none;
+        background: transparent;
+      }
+    }
+
+    .toolbar-actions {
+      display: flex;
+      gap: $spacing-sm;
+
+      .toolbar-btn {
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: $card-bg;
+        border: none;
+        border-radius: $radius-md;
+        box-shadow: $shadow-card;
+        cursor: pointer;
+        transition: all 0.3s ease;
+
+        i {
+          font-size: 18px;
+          color: $text-secondary;
+        }
+
+        &:hover {
+          background: $primary-color;
+
+          i {
+            color: #fff;
+          }
+        }
+      }
+    }
+  }
+
+  .map-view {
+    flex: 1;
+    background: #e8f4f8;
+  }
+
+  .map-legend {
+    position: absolute;
+    bottom: $spacing-lg;
+    left: $spacing-lg;
+    background: $card-bg;
+    border-radius: $radius-md;
+    padding: $spacing-md;
+    box-shadow: $shadow-card;
+    z-index: 100;
+
+    h4 {
+      font-size: 13px;
+      font-weight: 600;
+      color: $text-primary;
+      margin-bottom: $spacing-sm;
+    }
+
+    .legend-item {
+      display: flex;
+      align-items: center;
+      font-size: 12px;
+      color: $text-secondary;
+      margin-bottom: 4px;
+
+      &:last-child {
+        margin-bottom: 0;
+      }
+
+      .legend-marker {
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        margin-right: $spacing-sm;
+
+        &.high {
+          background: $danger-color;
+        }
+        &.medium {
+          background: $warning-color;
+        }
+        &.low {
+          background: $success-color;
+        }
+      }
+    }
+  }
+}
+
+// 右侧信息面板
+.info-panel {
+  width: 320px;
+  flex-shrink: 0;
+  background: $card-bg;
+  border-left: 1px solid $border-color;
+  display: flex;
+  flex-direction: column;
+  transform: translateX(0);
+  transition: transform 0.3s ease;
+
+  &.hidden {
+    transform: translateX(100%);
+  }
+
+  .panel-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $spacing-lg;
+    border-bottom: 1px solid $border-color;
+
+    h3 {
+      font-size: 16px;
+      font-weight: 600;
+      color: $text-primary;
+    }
+
+    i {
+      font-size: 18px;
+      color: $text-muted;
+      cursor: pointer;
+      transition: color 0.3s ease;
+
+      &:hover {
+        color: $text-primary;
+      }
+    }
+  }
+
+  .panel-body {
+    flex: 1;
+    padding: $spacing-lg;
+    overflow-y: auto;
+  }
+
+  .info-placeholder {
+    text-align: center;
+    padding: $spacing-xl * 2 0;
+    color: $text-muted;
+
+    i {
+      font-size: 48px;
+      margin-bottom: $spacing-lg;
+      color: $border-color;
+    }
+
+    p {
+      font-size: 14px;
+    }
+  }
+
+  .info-content {
+    .info-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: $spacing-lg;
+
+      h4 {
+        font-size: 18px;
+        font-weight: 600;
+        color: $text-primary;
+      }
+
+      .info-badge {
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        background: rgba($primary-color, 0.1);
+        color: $primary-color;
+      }
+    }
+
+    .info-stats {
+      display: flex;
+      gap: $spacing-lg;
+      padding: $spacing-lg;
+      background: $bg-color;
+      border-radius: $radius-md;
+      margin-bottom: $spacing-lg;
+
+      .stat-item {
+        flex: 1;
+        text-align: center;
+
+        .stat-value {
+          display: block;
+          font-size: 24px;
+          font-weight: 700;
+          color: $primary-color;
+        }
+
+        .stat-label {
+          font-size: 12px;
+          color: $text-muted;
+        }
+      }
+    }
+
+    .info-chart {
+      margin-bottom: $spacing-lg;
+
+      h5 {
+        font-size: 14px;
+        font-weight: 500;
+        color: $text-primary;
+        margin-bottom: $spacing-md;
+      }
+    }
+
+    .info-actions {
+      display: flex;
+      gap: $spacing-sm;
+    }
+  }
+}
+
+// OpenLayers 样式覆盖
+.ol-control {
+  display: none;
+}
+
+.ol-popup {
+  position: absolute;
+  background: $card-bg;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-card;
+  padding: $spacing-lg;
+  min-width: 200px;
+
+  &::after {
+    content: "";
+    position: absolute;
+    bottom: -10px;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 10px solid transparent;
+    border-top-color: $card-bg;
+  }
+
+  .popup-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: $text-primary;
+    margin-bottom: $spacing-sm;
+  }
+
+  .popup-value {
+    font-size: 24px;
+    font-weight: 700;
+    color: $primary-color;
+  }
+
+  .popup-label {
+    font-size: 12px;
+    color: $text-muted;
+  }
+}
+
+// 响应式
+@media (max-width: 1200px) {
+  .map-sidebar {
+    width: 240px;
+  }
+
+  .info-panel {
+    width: 280px;
+  }
+}
+
+@media (max-width: 992px) {
+  .map-sidebar,
+  .info-panel {
+    display: none;
+  }
+}
