@@ -2,6 +2,8 @@
 // Mock API 服务 - 模拟后端接口
 // ==========================================
 
+import CardStore from "../utils/card-store.js";
+
 // 模拟延迟
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -590,6 +592,30 @@ const mockDB = {
         deadline: "2025-02-03",
       },
     ],
+    user_behavior: {
+      categories: ["周一", "周二", "周三", "周四", "周五", "周六", "周日"],
+      series: [
+        { name: "页面浏览", data: [1200, 1500, 1320, 1450, 1680, 2100, 1900] },
+        { name: "独立访客", data: [800, 950, 880, 920, 1050, 1300, 1150] },
+        { name: "新增用户", data: [120, 150, 135, 145, 168, 210, 190] },
+      ],
+    },
+    business_kpi: {
+      categories: ["Q1", "Q2", "Q3", "Q4"],
+      series: [
+        { name: "营收(万)", data: [3200, 4500, 5200, 6800] },
+        { name: "利润(万)", data: [800, 1200, 1500, 2100] },
+        { name: "用户数(万)", data: [15, 22, 30, 42] },
+      ],
+    },
+    sales_stats: {
+      categories: ["1月", "2月", "3月", "4月", "5月", "6月"],
+      series: [
+        { name: "线上销售", data: [450, 520, 480, 610, 580, 720] },
+        { name: "线下销售", data: [380, 420, 390, 450, 480, 530] },
+        { name: "代理渠道", data: [220, 280, 250, 310, 340, 380] },
+      ],
+    },
   },
 
   // 地图数据
@@ -690,18 +716,19 @@ const MockAPI = {
   // 用户卡片
   async getUserCards() {
     await delay(300);
-    return { code: 200, data: mockDB.userCards, message: "success" };
+    const cards = CardStore.getAll();
+    return { code: 200, data: cards, message: "success" };
   },
 
   async saveUserCards(cards) {
     await delay(400);
-    mockDB.userCards = cards;
+    CardStore.saveAll(cards);
     return { code: 200, data: cards, message: "success" };
   },
 
   async deleteUserCard(cardId) {
     await delay(200);
-    mockDB.userCards = mockDB.userCards.filter((c) => c.id !== cardId);
+    CardStore.remove(cardId);
     return { code: 200, data: null, message: "success" };
   },
 

@@ -3,6 +3,7 @@
 // ==========================================
 
 import { Toast } from "../utils/request.js";
+import CardStore from "../utils/card-store.js";
 
 // 页面状态
 const state = {
@@ -18,6 +19,7 @@ const state = {
     clickAction: "none",
     showTooltip: true,
   },
+  editingCardId: null,
   chartInstance: null,
   demoData: {
     line: {
@@ -77,12 +79,82 @@ const state = {
   },
 };
 
+function getQueryParam(name) {
+  const urlParams = new URLSearchParams(window.location.search);
+  return urlParams.get(name);
+}
+
+function loadCardForEdit(cardId) {
+  const card = CardStore.getById(cardId);
+  if (!card) {
+    Toast.warning("未找到该卡片，将创建新卡片");
+    return;
+  }
+
+  state.editingCardId = cardId;
+  state.chartType = card.chartType || "line";
+  state.config.title = card.title || "数据分析图表";
+
+  if (card.config) {
+    state.config.dataSource = card.config.dataSource || "demo";
+    state.config.refreshRate = card.config.refreshRate || 0;
+    state.config.primaryColor = card.config.primaryColor || "#1E9FFF";
+    state.config.showLegend = card.config.showLegend !== false;
+    state.config.showLabel = card.config.showLabel === true;
+    state.config.smoothLine = card.config.smoothLine !== false;
+    state.config.clickAction = card.config.clickAction || "none";
+    state.config.showTooltip = card.config.showTooltip !== false;
+  }
+
+  // 更新 UI
+  document.getElementById("cardTitle").value = state.config.title;
+  document.getElementById("previewTitle").textContent = state.config.title;
+  document.getElementById("dataSource").value = state.config.dataSource;
+  document.getElementById("refreshRate").value = state.config.refreshRate;
+  document.getElementById("clickAction").value = state.config.clickAction;
+
+  // 更新图表类型选中状态
+  document.querySelectorAll(".chart-type-item").forEach((item) => {
+    item.classList.remove("active");
+    if (item.dataset.type === state.chartType) {
+      item.classList.add("active");
+    }
+  });
+
+  // 更新颜色选中状态
+  document.querySelectorAll(".color-item").forEach((item) => {
+    item.classList.remove("active");
+    if (item.dataset.color === state.config.primaryColor) {
+      item.classList.add("active");
+    }
+  });
+
+  // 更新开关状态
+  document.getElementById("showLegend").checked = state.config.showLegend;
+  document.getElementById("showLabel").checked = state.config.showLabel;
+  document.getElementById("smoothLine").checked = state.config.smoothLine;
+  document.getElementById("showTooltip").checked = state.config.showTooltip;
+
+  // 更新预览图表和数据表格
+  updateChart();
+  updateDataTable();
+}
+
 // 初始化页面
 function initPage() {
   console.log("[CardFactory] 初始化卡片工厂...");
 
   bindEvents();
   initChart();
+
+  const cardId = getQueryParam("cardId");
+  if (cardId) {
+    loadCardForEdit(cardId);
+    document.getElementById("saveCard").textContent = "保存修改";
+    document.getElementById("addToWorkspace").textContent = "更新到工作台";
+    layui.form.render("checkbox");
+  }
+
   updateDataTable();
   updateConfigCode();
 
@@ -591,54 +663,102 @@ function updateConfigCode() {
   );
 }
 
-// 保存卡片
-function saveCard() {
-  const cardConfig = {
-    id: "card_" + Date.now(),
-    type: state.chartType,
-    ...state.config,
-    createTime: new Date().toISOString(),
-  };
+function buildCardConfig() {
+  const primaryColor = state.config.primaryColor;
+  const colors = [
+    primaryColor,
+    "#5FB878",
+    "#FFB800",
+    "#FF5722",
+    "#9c27b0",
+  ];
 
-  // 模拟保存到本地存储
-  const savedCards = JSON.parse(localStorage.getItem("savedCards") || "[]");
-  savedCards.push(cardConfig);
-  localStorage.setItem("savedCards", JSON.stringify(savedCards));
+  let dataSource = state.config.dataSource;
+  if (dataSource === "demo") {
+    if (state.chartType === "pie") {
+      dataSource = "dept_distribution";
+    } else if (
+      state.chartType === "line" ||
+      state.chartType === "bar" ||
+      state.chartType === "area"
+    ) {
+      dataSource = "monthly_stats";
+    } else {
+      dataSource = "dept_distribution";
+    }
+  }
 
-  Toast.success("卡片配置已保存到本地");
-}
-
-// 添加到工作台
-function addToWorkspace() {
-  const cardConfig = {
-    id: "uc" + Date.now(),
+  return {
     type: "chart",
     chartType: state.chartType,
     title: state.config.title,
     config: {
-      dataSource: state.config.dataSource,
-      colors: [
-        state.config.primaryColor,
-        "#5FB878",
-        "#FFB800",
-        "#FF5722",
-        "#9c27b0",
-      ],
+      dataSource: dataSource,
+      colors: colors,
+      primaryColor: primaryColor,
+      showLegend: state.config.showLegend,
+      showLabel: state.config.showLabel,
+      showTooltip: state.config.showTooltip,
+      smoothLine: state.config.smoothLine,
+      clickAction: state.config.clickAction,
+      refreshRate: state.config.refreshRate,
     },
   };
+}
 
-  // 模拟添加到工作台
-  const workspaceCards = JSON.parse(
-    localStorage.getItem("workspaceCards") || "[]",
-  );
-  workspaceCards.push(cardConfig);
-  localStorage.setItem("workspaceCards", JSON.stringify(workspaceCards));
+// 保存卡片（保存到工作台）
+function saveCard() {
+  const cardData = buildCardConfig();
+
+  if (state.editingCardId) {
+    const updated = CardStore.update(state.editingCardId, cardData);
+    if (updated) {
+      Toast.success("卡片已更新");
+    } else {
+      Toast.error("更新失败，请重试");
+    }
+  } else {
+    const newCard = CardStore.add(cardData);
+    if (newCard) {
+      state.editingCardId = newCard.id;
+      document.getElementById("saveCard").textContent = "保存修改";
+      document.getElementById("addToWorkspace").textContent = "更新到工作台";
+      Toast.success("卡片已保存到我的数据工作台");
+    } else {
+      Toast.error("保存失败，请重试");
+    }
+  }
+}
+
+// 添加到工作台
+function addToWorkspace() {
+  const cardData = buildCardConfig();
+
+  if (state.editingCardId) {
+    const updated = CardStore.update(state.editingCardId, cardData);
+    if (!updated) {
+      Toast.error("更新失败，请重试");
+      return;
+    }
+  } else {
+    const newCard = CardStore.add(cardData);
+    if (!newCard) {
+      Toast.error("添加失败，请重试");
+      return;
+    }
+    state.editingCardId = newCard.id;
+    document.getElementById("saveCard").textContent = "保存修改";
+    document.getElementById("addToWorkspace").textContent = "更新到工作台";
+  }
 
   layui.layer.confirm(
-    "卡片已添加到工作台，是否立即查看？",
+    state.editingCardId
+      ? "卡片已更新到我的数据工作台，是否立即查看？"
+      : "卡片已添加到我的数据工作台，是否立即查看？",
     {
       btn: ["去查看", "继续配置"],
       icon: 1,
+      title: state.editingCardId ? "更新成功" : "添加成功",
     },
     () => {
       window.location.href = "../index.html";
