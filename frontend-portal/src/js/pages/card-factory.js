@@ -3,13 +3,14 @@
 // ==========================================
 
 import { Toast } from "../utils/request.js";
+import CardStore from "../utils/card-store.js";
 
 // 页面状态
 const state = {
   chartType: "line",
   config: {
     title: "数据分析图表",
-    dataSource: "demo",
+    dataSource: "monthly_stats",
     refreshRate: 0,
     primaryColor: "#1E9FFF",
     showLegend: true,
@@ -19,6 +20,8 @@ const state = {
     showTooltip: true,
   },
   chartInstance: null,
+  editingCardId: null,
+  editingWorkspaceCardId: null,
   demoData: {
     line: {
       categories: ["周一", "周二", "周三", "周四", "周五", "周六", "周日"],
@@ -81,12 +84,85 @@ const state = {
 function initPage() {
   console.log("[CardFactory] 初始化卡片工厂...");
 
+  loadCardFromUrl();
   bindEvents();
   initChart();
   updateDataTable();
   updateConfigCode();
+  updateEditUI();
 
   console.log("[CardFactory] 初始化完成");
+}
+
+function loadCardFromUrl() {
+  const params = new URLSearchParams(window.location.search);
+  const cardId = params.get("cardId");
+  const workspaceCardId = params.get("workspaceCardId");
+
+  if (!cardId && !workspaceCardId) return;
+
+  let card = null;
+
+  if (workspaceCardId) {
+    card = CardStore.getUserCardById(workspaceCardId);
+    state.editingWorkspaceCardId = workspaceCardId;
+    if (card && card.factoryCardId) {
+      state.editingCardId = card.factoryCardId;
+    }
+  } else if (cardId) {
+    const factoryCards = CardStore.getFactoryCards();
+    card = factoryCards.find((c) => c.id === cardId);
+    state.editingCardId = cardId;
+  }
+
+  if (card) {
+    state.chartType = card.chartType || card.type || "line";
+    state.config = {
+      title: card.title || "数据分析图表",
+      dataSource: card.config?.dataSource || card.dataSource || "demo",
+      refreshRate: card.config?.refreshRate ?? card.refreshRate ?? 0,
+      primaryColor:
+        card.config?.primaryColor || card.primaryColor || "#1E9FFF",
+      showLegend: card.config?.showLegend ?? card.showLegend ?? true,
+      showLabel: card.config?.showLabel ?? card.showLabel ?? false,
+      smoothLine: card.config?.smoothLine ?? card.smoothLine ?? true,
+      clickAction: card.config?.clickAction || card.clickAction || "none",
+      showTooltip: card.config?.showTooltip ?? card.showTooltip ?? true,
+    };
+  }
+}
+
+function updateEditUI() {
+  const saveBtn = document.getElementById("saveCard");
+  const addBtn = document.getElementById("addToWorkspace");
+  const cardTitleInput = document.getElementById("cardTitle");
+  const dataSourceSelect = document.getElementById("dataSource");
+  const refreshRateSelect = document.getElementById("refreshRate");
+  const previewTitle = document.getElementById("previewTitle");
+  const colorItems = document.querySelectorAll(".color-item");
+
+  if (state.editingCardId || state.editingWorkspaceCardId) {
+    saveBtn.innerHTML = '<i class="layui-icon layui-icon-ok"></i> 更新卡片';
+    addBtn.innerHTML =
+      '<i class="layui-icon layui-icon-ok-circle"></i> 保存并返回';
+  }
+
+  if (cardTitleInput) cardTitleInput.value = state.config.title;
+  if (previewTitle) previewTitle.textContent = state.config.title;
+  if (dataSourceSelect) dataSourceSelect.value = state.config.dataSource;
+  if (refreshRateSelect)
+    refreshRateSelect.value = String(state.config.refreshRate);
+
+  document.querySelectorAll(".chart-type-item").forEach((item) => {
+    item.classList.toggle("active", item.dataset.type === state.chartType);
+  });
+
+  colorItems.forEach((item) => {
+    item.classList.toggle(
+      "active",
+      item.dataset.color === state.config.primaryColor,
+    );
+  });
 }
 
 // 绑定事件
@@ -594,29 +670,60 @@ function updateConfigCode() {
 // 保存卡片
 function saveCard() {
   const cardConfig = {
-    id: "card_" + Date.now(),
+    id: state.editingCardId || undefined,
     type: state.chartType,
-    ...state.config,
-    createTime: new Date().toISOString(),
+    chartType: state.chartType,
+    title: state.config.title,
+    dataSource: state.config.dataSource,
+    primaryColor: state.config.primaryColor,
+    colors: [
+      state.config.primaryColor,
+      "#5FB878",
+      "#FFB800",
+      "#FF5722",
+      "#9c27b0",
+    ],
+    showLegend: state.config.showLegend,
+    showLabel: state.config.showLabel,
+    smoothLine: state.config.smoothLine,
+    clickAction: state.config.clickAction,
+    showTooltip: state.config.showTooltip,
+    refreshRate: state.config.refreshRate,
+    source: "factory",
   };
 
-  // 模拟保存到本地存储
-  const savedCards = JSON.parse(localStorage.getItem("savedCards") || "[]");
-  savedCards.push(cardConfig);
-  localStorage.setItem("savedCards", JSON.stringify(savedCards));
-
-  Toast.success("卡片配置已保存到本地");
+  if (state.editingCardId) {
+    CardStore.updateFactoryCard(state.editingCardId, cardConfig);
+    CardStore.updateUserCard(state.editingWorkspaceCardId, {
+      title: state.config.title,
+      config: {
+        dataSource: state.config.dataSource,
+        primaryColor: state.config.primaryColor,
+        colors: cardConfig.colors,
+        showLegend: state.config.showLegend,
+        showLabel: state.config.showLabel,
+        smoothLine: state.config.smoothLine,
+        showTooltip: state.config.showTooltip,
+        clickAction: state.config.clickAction,
+        refreshRate: state.config.refreshRate,
+      },
+    });
+    Toast.success("卡片配置已更新");
+  } else {
+    CardStore.saveFactoryCard(cardConfig);
+    Toast.success("卡片配置已保存到本地");
+  }
 }
 
 // 添加到工作台
 function addToWorkspace() {
-  const cardConfig = {
-    id: "uc" + Date.now(),
-    type: "chart",
-    chartType: state.chartType,
-    title: state.config.title,
-    config: {
+  if (state.editingWorkspaceCardId || state.editingCardId) {
+    const cardConfig = {
+      type: state.chartType,
+      chartType: state.chartType,
+      title: state.config.title,
       dataSource: state.config.dataSource,
+      primaryColor: state.config.primaryColor,
       colors: [
         state.config.primaryColor,
         "#5FB878",
@@ -624,21 +731,65 @@ function addToWorkspace() {
         "#FF5722",
         "#9c27b0",
       ],
-    },
-  };
+      showLegend: state.config.showLegend,
+      showLabel: state.config.showLabel,
+      smoothLine: state.config.smoothLine,
+      clickAction: state.config.clickAction,
+      showTooltip: state.config.showTooltip,
+      refreshRate: state.config.refreshRate,
+      source: "factory",
+    };
 
-  // 模拟添加到工作台
-  const workspaceCards = JSON.parse(
-    localStorage.getItem("workspaceCards") || "[]",
-  );
-  workspaceCards.push(cardConfig);
-  localStorage.setItem("workspaceCards", JSON.stringify(workspaceCards));
+    if (state.editingCardId) {
+      CardStore.updateFactoryCard(state.editingCardId, cardConfig);
+    }
+
+    if (state.editingWorkspaceCardId) {
+      CardStore.updateUserCard(state.editingWorkspaceCardId, {
+        title: state.config.title,
+        chartType: state.chartType,
+        config: {
+          dataSource: state.config.dataSource,
+          primaryColor: state.config.primaryColor,
+          colors: cardConfig.colors,
+          showLegend: state.config.showLegend,
+          showLabel: state.config.showLabel,
+          smoothLine: state.config.smoothLine,
+          showTooltip: state.config.showTooltip,
+          clickAction: state.config.clickAction,
+          refreshRate: state.config.refreshRate,
+        },
+      });
+    }
+
+    Toast.success("卡片已更新，正在返回工作台...");
+    setTimeout(() => {
+      window.location.href = "../index.html";
+    }, 800);
+    return;
+  }
+
+  const workspaceCard = CardStore.buildWorkspaceCardFromConfig({
+    chartType: state.chartType,
+    title: state.config.title,
+    dataSource: state.config.dataSource,
+    primaryColor: state.config.primaryColor,
+    showLegend: state.config.showLegend,
+    showLabel: state.config.showLabel,
+    smoothLine: state.config.smoothLine,
+    showTooltip: state.config.showTooltip,
+    clickAction: state.config.clickAction,
+    refreshRate: state.config.refreshRate,
+  });
+
+  CardStore.addUserCard(workspaceCard);
 
   layui.layer.confirm(
     "卡片已添加到工作台，是否立即查看？",
     {
       btn: ["去查看", "继续配置"],
       icon: 1,
+      title: "添加成功",
     },
     () => {
       window.location.href = "../index.html";
@@ -669,10 +820,20 @@ function copyConfig() {
 // 页面加载完成后初始化
 document.addEventListener("DOMContentLoaded", () => {
   layui.use(["layer", "form"], () => {
-    // 初始化开关组件
+    loadCardFromUrl();
+
+    const showLegendEl = document.getElementById("showLegend");
+    const showLabelEl = document.getElementById("showLabel");
+    const smoothLineEl = document.getElementById("smoothLine");
+    const showTooltipEl = document.getElementById("showTooltip");
+
+    if (showLegendEl) showLegendEl.checked = state.config.showLegend;
+    if (showLabelEl) showLabelEl.checked = state.config.showLabel;
+    if (smoothLineEl) smoothLineEl.checked = state.config.smoothLine;
+    if (showTooltipEl) showTooltipEl.checked = state.config.showTooltip;
+
     layui.form.render("checkbox");
 
-    // 监听开关变化
     layui.form.on("switch", (data) => {
       const id = data.elem.id;
       const checked = data.elem.checked;

@@ -2,6 +2,8 @@
 // Mock API 服务 - 模拟后端接口
 // ==========================================
 
+import CardStore from "../utils/card-store.js";
+
 // 模拟延迟
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -689,20 +691,51 @@ const MockAPI = {
 
   // 用户卡片
   async getUserCards() {
-    await delay(300);
-    return { code: 200, data: mockDB.userCards, message: "success" };
+    await delay(200);
+    const cards = CardStore.getUserCards();
+    return { code: 200, data: cards, message: "success" };
   },
 
   async saveUserCards(cards) {
-    await delay(400);
-    mockDB.userCards = cards;
+    await delay(300);
+    CardStore.saveUserCards(cards);
     return { code: 200, data: cards, message: "success" };
   },
 
   async deleteUserCard(cardId) {
     await delay(200);
-    mockDB.userCards = mockDB.userCards.filter((c) => c.id !== cardId);
+    CardStore.deleteUserCard(cardId);
     return { code: 200, data: null, message: "success" };
+  },
+
+  async addUserCard(card) {
+    await delay(200);
+    const newCard = CardStore.addUserCard(card);
+    return { code: 200, data: newCard, message: "success" };
+  },
+
+  async updateUserCard(cardId, updates) {
+    await delay(200);
+    const updated = CardStore.updateUserCard(cardId, updates);
+    return { code: 200, data: updated, message: "success" };
+  },
+
+  async getUserCardById(cardId) {
+    await delay(100);
+    const card = CardStore.getUserCardById(cardId);
+    return { code: 200, data: card, message: "success" };
+  },
+
+  async saveFactoryCard(cardConfig) {
+    await delay(300);
+    const newCard = CardStore.saveFactoryCard(cardConfig);
+    return { code: 200, data: newCard, message: "success" };
+  },
+
+  async getFactoryCards() {
+    await delay(200);
+    const cards = CardStore.getFactoryCards();
+    return { code: 200, data: cards, message: "success" };
   },
 
   // 卡片模板

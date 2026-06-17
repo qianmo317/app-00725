@@ -149,6 +149,14 @@ function bindEvents() {
   document
     .getElementById("emptyPlaceholder")
     ?.addEventListener("click", openAddCardModal);
+
+  // 前往卡片工厂
+  document
+    .getElementById("goToFactoryBtn")
+    ?.addEventListener("click", () => {
+      closeAddCardModal();
+      window.location.href = "pages/card-factory.html";
+    });
 }
 
 // 加载 KPI 数据
@@ -396,8 +404,13 @@ async function loadUserCards() {
 
 // 渲染用户卡片
 function renderUserCard(card) {
+  const sourceBadge =
+    card.source === "factory"
+      ? '<span class="card-source-badge factory"><i class="layui-icon layui-icon-chart"></i> 卡片工厂</span>'
+      : "";
+
   return `
-        <div class="card draggable-card" data-card-id="${card.id}">
+        <div class="card draggable-card" data-card-id="${card.id}" data-source="${card.source || "system"}">
             <div class="card-toolbar">
                 <div class="toolbar-btn edit" title="编辑">
                     <i class="layui-icon layui-icon-edit"></i>
@@ -408,6 +421,7 @@ function renderUserCard(card) {
             </div>
             <div class="card-header">
                 <h3>${card.title}</h3>
+                ${sourceBadge}
             </div>
             <div class="card-body">
                 <div id="card-content-${card.id}" class="card-content-area" style="height: 200px;"></div>
@@ -437,18 +451,65 @@ async function renderCardContent(card) {
 }
 
 // 渲染图表
-function renderChart(container, chartType, data, config) {
+function renderChart(container, chartType, data, config = {}) {
+  if (!data) {
+    container.innerHTML =
+      '<div class="empty-state"><i class="layui-icon layui-icon-face-cry"></i><p>暂无数据</p></div>';
+    return;
+  }
+
+  const isPieData = Array.isArray(data) && data.length > 0 && typeof data[0] === "object" && "name" in data[0] && "value" in data[0];
+  const isAxisData = typeof data === "object" && !Array.isArray(data) && data.categories && data.series;
+  const pieLikeCharts = ["pie", "radar"];
+  const axisLikeCharts = ["bar", "line", "area"];
+
+  if (pieLikeCharts.includes(chartType) && !isPieData) {
+    container.innerHTML =
+      '<div class="empty-state"><i class="layui-icon layui-icon-tips"></i><p>当前数据源不适合该图表类型</p><p style="font-size: 12px; color: #999; margin-top: 5px;">请使用部门分布数据</p></div>';
+    return;
+  }
+  if (axisLikeCharts.includes(chartType) && !isAxisData) {
+    container.innerHTML =
+      '<div class="empty-state"><i class="layui-icon layui-icon-tips"></i><p>当前数据源不适合该图表类型</p><p style="font-size: 12px; color: #999; margin-top: 5px;">请使用月度统计数据</p></div>';
+    return;
+  }
+
+  const existingChart = echarts.getInstanceByDom(container);
+  if (existingChart) {
+    existingChart.dispose();
+  }
+
   const chart = echarts.init(container);
   let option = {};
+
+  const primaryColor = config.primaryColor || "#1E9FFF";
+  const colors = config.colors || [
+    primaryColor,
+    "#5FB878",
+    "#FFB800",
+    "#FF5722",
+    "#9c27b0",
+  ];
+  const showLegend = config.showLegend !== false;
+  const showLabel = config.showLabel === true;
+  const smoothLine = config.smoothLine !== false;
+  const showTooltip = config.showTooltip !== false;
 
   switch (chartType) {
     case "pie":
       option = {
+        color: colors,
         tooltip: {
+          show: showTooltip,
           trigger: "item",
           formatter: "{b}: {c} ({d}%)",
+          backgroundColor: "rgba(255, 255, 255, 0.95)",
+          borderColor: "#e6e6e6",
+          borderWidth: 1,
+          textStyle: { color: "#333" },
         },
         legend: {
+          show: showLegend,
           orient: "vertical",
           right: 10,
           top: "center",
@@ -458,9 +519,12 @@ function renderChart(container, chartType, data, config) {
           {
             type: "pie",
             radius: ["40%", "70%"],
-            center: ["40%", "50%"],
+            center: showLegend ? ["40%", "50%"] : ["50%", "50%"],
             avoidLabelOverlap: false,
-            label: { show: false },
+            label: {
+              show: showLabel,
+              formatter: "{b}: {d}%",
+            },
             emphasis: {
               label: { show: true, fontWeight: "bold" },
             },
@@ -472,27 +536,30 @@ function renderChart(container, chartType, data, config) {
             },
           },
         ],
-        color: config.colors || [
-          "#1E9FFF",
-          "#5FB878",
-          "#FFB800",
-          "#FF5722",
-          "#9c27b0",
-        ],
       };
       break;
 
     case "bar":
       option = {
-        tooltip: { trigger: "axis" },
+        color: colors,
+        tooltip: {
+          show: showTooltip,
+          trigger: "axis",
+          backgroundColor: "rgba(255, 255, 255, 0.95)",
+          borderColor: "#e6e6e6",
+          borderWidth: 1,
+          textStyle: { color: "#333" },
+        },
         legend: {
+          show: showLegend,
           data: data.series.map((s) => s.name),
           bottom: 0,
+          textStyle: { color: "#666" },
         },
         grid: {
           left: "3%",
           right: "4%",
-          bottom: "15%",
+          bottom: showLegend ? "15%" : "10%",
           top: "10%",
           containLabel: true,
         },
@@ -513,9 +580,12 @@ function renderChart(container, chartType, data, config) {
           type: "bar",
           data: s.data,
           barWidth: "30%",
+          label: {
+            show: showLabel,
+            position: "top",
+          },
           itemStyle: {
             borderRadius: [4, 4, 0, 0],
-            color: i === 0 ? "#1E9FFF" : "#5FB878",
           },
         })),
       };
@@ -524,15 +594,25 @@ function renderChart(container, chartType, data, config) {
     case "line":
     case "area":
       option = {
-        tooltip: { trigger: "axis" },
+        color: colors,
+        tooltip: {
+          show: showTooltip,
+          trigger: "axis",
+          backgroundColor: "rgba(255, 255, 255, 0.95)",
+          borderColor: "#e6e6e6",
+          borderWidth: 1,
+          textStyle: { color: "#333" },
+        },
         legend: {
+          show: showLegend,
           data: data.series.map((s) => s.name),
           bottom: 0,
+          textStyle: { color: "#666" },
         },
         grid: {
           left: "3%",
           right: "4%",
-          bottom: "15%",
+          bottom: showLegend ? "15%" : "10%",
           top: "10%",
           containLabel: true,
         },
@@ -551,10 +631,13 @@ function renderChart(container, chartType, data, config) {
         series: data.series.map((s, i) => ({
           name: s.name,
           type: "line",
-          smooth: true,
+          smooth: smoothLine,
           data: s.data,
-          itemStyle: {
-            color: i === 0 ? "#1E9FFF" : "#5FB878",
+          symbol: "circle",
+          symbolSize: 6,
+          label: {
+            show: showLabel,
+            position: "top",
           },
           areaStyle: chartType === "area" ? { opacity: 0.3 } : null,
         })),
@@ -563,68 +646,112 @@ function renderChart(container, chartType, data, config) {
 
     case "radar":
       option = {
-        tooltip: {},
+        color: colors,
+        tooltip: {
+          show: showTooltip,
+        },
         legend: {
-          data: ["数据指标"],
+          show: showLegend,
+          data: data.series ? data.series.map((s) => s.name) : ["数据指标"],
           bottom: 0,
+          textStyle: { color: "#666" },
         },
         radar: {
           indicator: Array.isArray(data)
             ? data.map((d) => ({ name: d.name, max: 100 }))
-            : [
-                { name: "技术", max: 100 },
-                { name: "销售", max: 100 },
-                { name: "运营", max: 100 },
-                { name: "财务", max: 100 },
-                { name: "管理", max: 100 },
-              ],
+            : data.indicators,
+          shape: "polygon",
+          splitNumber: 4,
+          axisName: { color: "#666" },
+          splitLine: { lineStyle: { color: "#e6e6e6" } },
+          splitArea: { show: true, areaStyle: { color: ["#fff", "#f5f5f5"] } },
         },
         series: [
           {
             type: "radar",
-            data: [
-              {
-                value: Array.isArray(data)
-                  ? data.map((d) => d.value)
-                  : [80, 70, 85, 60, 75],
-                name: "数据指标",
-              },
-            ],
-            areaStyle: { opacity: 0.3 },
+            data: Array.isArray(data)
+              ? [
+                  {
+                    value: data.map((d) => d.value),
+                    name: "数据指标",
+                    areaStyle: { opacity: 0.2 },
+                  },
+                ]
+              : data.series.map((s, i) => ({
+                  name: s.name,
+                  value: s.data,
+                  areaStyle: { opacity: 0.2 },
+                  lineStyle: { color: colors[i] },
+                  itemStyle: { color: colors[i] },
+                })),
           },
         ],
-        color: ["#1E9FFF"],
       };
       break;
 
     case "gauge":
       option = {
-        tooltip: { formatter: "{b}: {c}%" },
+        color: colors,
+        tooltip: {
+          show: showTooltip,
+          formatter: "{b}: {c}%",
+        },
         series: [
           {
             type: "gauge",
-            progress: { show: true, width: 12 },
-            axisLine: { lineStyle: { width: 12 } },
+            startAngle: 180,
+            endAngle: 0,
+            min: 0,
+            max: 100,
+            splitNumber: 10,
+            radius: "90%",
+            center: ["50%", "70%"],
+            axisLine: {
+              lineStyle: {
+                width: 20,
+                color: [
+                  [0.3, "#FF5722"],
+                  [0.7, "#FFB800"],
+                  [1, "#5FB878"],
+                ],
+              },
+            },
+            pointer: {
+              itemStyle: { color: primaryColor },
+            },
             axisTick: { show: false },
-            splitLine: { length: 10, lineStyle: { width: 2, color: "#999" } },
-            axisLabel: { distance: 20, color: "#999", fontSize: 12 },
-            anchor: { show: true, size: 20, itemStyle: { borderWidth: 2 } },
-            title: { show: true, offsetCenter: [0, "70%"], fontSize: 14 },
+            splitLine: { show: false },
+            axisLabel: {
+              color: "#999",
+              distance: -30,
+              fontSize: 12,
+            },
             detail: {
               valueAnimation: true,
-              fontSize: 24,
-              offsetCenter: [0, "40%"],
               formatter: "{value}%",
+              color: primaryColor,
+              fontSize: 24,
+              offsetCenter: [0, "20%"],
             },
-            data: [{ value: 75, name: "完成率" }],
+            title: {
+              show: showLegend,
+              offsetCenter: [0, "40%"],
+              color: "#666",
+            },
+            data: [
+              {
+                value: data.value || 75,
+                name: data.name || "完成率",
+              },
+            ],
           },
         ],
-        color: ["#1E9FFF"],
       };
       break;
 
     default:
       option = {
+        color: colors,
         tooltip: { trigger: "axis" },
         xAxis: {
           type: "category",
@@ -781,7 +908,6 @@ async function loadCardTemplates(type) {
 async function addCardFromTemplate(templateId, type) {
   const chartType = templateId.replace("tpl_", "");
 
-  // 根据图表类型选择合适的数据源
   let dataSource = "dept_distribution";
   if (chartType === "bar" || chartType === "line" || chartType === "area") {
     dataSource = "monthly_stats";
@@ -802,26 +928,30 @@ async function addCardFromTemplate(templateId, type) {
   };
 
   const newCard = {
-    id: "uc" + Date.now(),
     type: type === "list" ? "list" : "chart",
     chartType: chartType,
     title: titleMap[chartType] || "新建卡片",
+    source: "system",
     config: {
       dataSource: dataSource,
       colors: ["#1E9FFF", "#5FB878", "#FFB800", "#FF5722", "#9c27b0"],
+      showLegend: true,
+      showLabel: false,
+      smoothLine: true,
+      showTooltip: true,
       limit: 5,
     },
   };
 
-  state.userCards.push(newCard);
+  const savedCard = await request.addUserCard(newCard);
+  state.userCards.push(savedCard);
 
-  // 重新渲染
   const container = document.getElementById("draggableCards");
   const placeholder = document.getElementById("emptyPlaceholder");
 
   placeholder.style.display = "none";
-  container.insertAdjacentHTML("beforeend", renderUserCard(newCard));
-  renderCardContent(newCard);
+  container.insertAdjacentHTML("beforeend", renderUserCard(savedCard));
+  renderCardContent(savedCard);
 
   closeAddCardModal();
   Toast.success("卡片添加成功");
@@ -860,14 +990,58 @@ async function deleteCard(cardId) {
 }
 
 // 编辑卡片
+const DATA_SOURCE_COMPAT = {
+  dept_distribution: {
+    label: "部门分布数据",
+    chartTypes: ["pie", "radar"],
+  },
+  monthly_stats: {
+    label: "月度统计数据",
+    chartTypes: ["bar", "line", "area"],
+  },
+  todo_list: {
+    label: "待办事项",
+    chartTypes: [],
+  },
+};
+
+const CHART_TYPE_LABELS = {
+  bar: "柱状图",
+  line: "折线图",
+  area: "面积图",
+  pie: "饼图",
+  radar: "雷达图",
+  gauge: "仪表盘",
+};
+
 function editCard(cardId) {
   const card = state.userCards.find((c) => c.id === cardId);
   if (!card) return;
 
+  const isChartCard = card.type === "chart";
+  const config = card.config || {};
+
+  let chartType = card.chartType || "bar";
+  const dataSource = config.dataSource || "monthly_stats";
+  const compat = DATA_SOURCE_COMPAT[dataSource];
+  if (compat && compat.chartTypes.length > 0 && !compat.chartTypes.includes(chartType)) {
+    chartType = compat.chartTypes[0];
+  }
+
+  const primaryColor = config.primaryColor || "#1E9FFF";
+  const colorOptions = [
+    { value: "#1E9FFF", label: "科技蓝" },
+    { value: "#5FB878", label: "自然绿" },
+    { value: "#FFB800", label: "活力橙" },
+    { value: "#FF5722", label: "热情红" },
+    { value: "#9c27b0", label: "优雅紫" },
+    { value: "#009688", label: "青绿色" },
+  ];
+
   layui.layer.open({
     type: 1,
     title: "编辑卡片",
-    area: ["500px", "400px"],
+    area: ["560px", isChartCard ? "620px" : "400px"],
     content: `
             <div style="padding: 20px;">
                 <div class="layui-form-item">
@@ -880,29 +1054,219 @@ function editCard(cardId) {
                     <label class="layui-form-label" style="width: 90px; white-space: nowrap;">数据源</label>
                     <div class="layui-input-block" style="margin-left: 120px;">
                         <select id="editCardDataSource" class="layui-input">
-                            <option value="dept_distribution" ${card.config.dataSource === "dept_distribution" ? "selected" : ""}>部门分布数据</option>
-                            <option value="monthly_stats" ${card.config.dataSource === "monthly_stats" ? "selected" : ""}>月度统计数据</option>
-                            <option value="todo_list" ${card.config.dataSource === "todo_list" ? "selected" : ""}>待办事项</option>
+                            <option value="dept_distribution" ${config.dataSource === "dept_distribution" ? "selected" : ""}>部门分布数据</option>
+                            <option value="monthly_stats" ${config.dataSource === "monthly_stats" ? "selected" : ""}>月度统计数据</option>
+                            <option value="todo_list" ${config.dataSource === "todo_list" ? "selected" : ""}>待办事项</option>
                         </select>
                     </div>
                 </div>
-                <div class="layui-form-item" style="text-align: right; margin-top: 30px;">
+                ${isChartCard ? `
+                <div class="layui-form-item">
+                    <label class="layui-form-label" style="width: 90px; white-space: nowrap;">图表类型</label>
+                    <div class="layui-input-block" style="margin-left: 120px;">
+                        <select id="editChartType" class="layui-input">
+                            <option value="bar" ${chartType === "bar" ? "selected" : ""}>柱状图</option>
+                            <option value="line" ${chartType === "line" ? "selected" : ""}>折线图</option>
+                            <option value="area" ${chartType === "area" ? "selected" : ""}>面积图</option>
+                            <option value="pie" ${chartType === "pie" ? "selected" : ""}>饼图</option>
+                            <option value="radar" ${chartType === "radar" ? "selected" : ""}>雷达图</option>
+                            <option value="gauge" ${chartType === "gauge" ? "selected" : ""}>仪表盘</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label" style="width: 90px; white-space: nowrap;">主题色</label>
+                    <div class="layui-input-block" style="margin-left: 120px;">
+                        <div id="editColorPicker" style="display: flex; gap: 10px; flex-wrap: wrap;">
+                            ${colorOptions.map(c => `
+                                <div class="color-option ${primaryColor === c.value ? 'selected' : ''}" 
+                                     data-color="${c.value}" 
+                                     title="${c.label}"
+                                     style="width: 32px; height: 32px; border-radius: 6px; cursor: pointer; border: 3px solid ${primaryColor === c.value ? '#333' : 'transparent'}; background-color: ${c.value}; transition: all 0.2s;">
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label" style="width: 90px; white-space: nowrap;">显示设置</label>
+                    <div class="layui-input-block" style="margin-left: 120px;">
+                        <input type="checkbox" id="editShowLegend" lay-skin="switch" lay-text="显示图例|隐藏图例" ${config.showLegend !== false ? "checked" : ""}>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label" style="width: 90px; white-space: nowrap;"></label>
+                    <div class="layui-input-block" style="margin-left: 120px;">
+                        <input type="checkbox" id="editShowLabel" lay-skin="switch" lay-text="显示标签|隐藏标签" ${config.showLabel === true ? "checked" : ""}>
+                    </div>
+                </div>
+                <div class="layui-form-item" id="editSmoothLineItem" style="${(chartType === 'line' || chartType === 'area') ? '' : 'display: none;'}">
+                    <label class="layui-form-label" style="width: 90px; white-space: nowrap;"></label>
+                    <div class="layui-input-block" style="margin-left: 120px;">
+                        <input type="checkbox" id="editSmoothLine" lay-skin="switch" lay-text="平滑曲线|折线模式" ${config.smoothLine !== false ? "checked" : ""}>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label" style="width: 90px; white-space: nowrap;"></label>
+                    <div class="layui-input-block" style="margin-left: 120px;">
+                        <input type="checkbox" id="editShowTooltip" lay-skin="switch" lay-text="显示提示|隐藏提示" ${config.showTooltip !== false ? "checked" : ""}>
+                    </div>
+                </div>
+                ` : ''}
+                ${card.source === "factory" ? `
+                <div class="layui-form-item" style="margin-top: 10px; padding-top: 15px; border-top: 1px solid #eee;">
+                    <div style="text-align: center;">
+                        <a href="pages/card-factory.html?workspaceCardId=${cardId}" style="color: #1E9FFF; font-size: 13px;">
+                            <i class="layui-icon layui-icon-chart"></i> 前往卡片工厂进行高级配置
+                        </a>
+                    </div>
+                </div>
+                ` : ''}
+                <div class="layui-form-item" style="text-align: right; margin-top: 20px;">
                     <button class="layui-btn" id="saveCardEdit">保存</button>
                     <button class="layui-btn layui-btn-primary" onclick="layui.layer.closeAll()">取消</button>
                 </div>
             </div>
         `,
     success: () => {
-      document.getElementById("saveCardEdit").addEventListener("click", () => {
-        card.title = document.getElementById("editCardTitle").value;
-        card.config.dataSource =
-          document.getElementById("editCardDataSource").value;
+      layui.form.render();
 
-        // 更新DOM
+      let selectedColor = primaryColor;
+
+      function updateDataSourceOptions(chartType) {
+        const dataSourceSelect = document.getElementById("editCardDataSource");
+        if (!dataSourceSelect) return;
+        dataSourceSelect.innerHTML = "";
+        Object.entries(DATA_SOURCE_COMPAT).forEach(([key, info]) => {
+          if (info.chartTypes.length > 0 && info.chartTypes.includes(chartType)) {
+            const option = document.createElement("option");
+            option.value = key;
+            option.textContent = info.label;
+            if (key === config.dataSource) {
+              option.selected = true;
+            }
+            dataSourceSelect.appendChild(option);
+          }
+        });
+        const currentVal = dataSourceSelect.value;
+        if (!currentVal && dataSourceSelect.options.length > 0) {
+          dataSourceSelect.value = dataSourceSelect.options[0].value;
+        }
+        layui.form.render("select");
+      }
+
+      function updateChartTypeOptions(dataSource) {
+        const chartTypeSelect = document.getElementById("editChartType");
+        if (!chartTypeSelect) return;
+        const compat = DATA_SOURCE_COMPAT[dataSource];
+        const compatibleTypes = compat?.chartTypes || [];
+        chartTypeSelect.innerHTML = "";
+        Object.entries(CHART_TYPE_LABELS).forEach(([type, label]) => {
+          if (compatibleTypes.includes(type)) {
+            const option = document.createElement("option");
+            option.value = type;
+            option.textContent = label;
+            if (type === chartType) {
+              option.selected = true;
+            }
+            chartTypeSelect.appendChild(option);
+          }
+        });
+        const currentVal = chartTypeSelect.value;
+        if (!currentVal && chartTypeSelect.options.length > 0) {
+          chartTypeSelect.value = chartTypeSelect.options[0].value;
+        }
+        layui.form.render("select");
+      }
+
+      document.querySelectorAll("#editColorPicker .color-option").forEach((el) => {
+        el.addEventListener("click", () => {
+          document.querySelectorAll("#editColorPicker .color-option").forEach((o) => {
+            o.style.borderColor = "transparent";
+          });
+          el.style.borderColor = "#333";
+          selectedColor = el.dataset.color;
+        });
+      });
+
+      const chartTypeSelect = document.getElementById("editChartType");
+      if (chartTypeSelect) {
+        chartTypeSelect.addEventListener("change", (e) => {
+          const val = e.target.value;
+          const smoothItem = document.getElementById("editSmoothLineItem");
+          if (smoothItem) {
+            smoothItem.style.display = (val === "line" || val === "area") ? "" : "none";
+          }
+          updateDataSourceOptions(val);
+        });
+      }
+
+      const dataSourceSelect = document.getElementById("editCardDataSource");
+      if (dataSourceSelect) {
+        dataSourceSelect.addEventListener("change", (e) => {
+          const val = e.target.value;
+          updateChartTypeOptions(val);
+          const newChartType = document.getElementById("editChartType")?.value;
+          const smoothItem = document.getElementById("editSmoothLineItem");
+          if (smoothItem && newChartType) {
+            smoothItem.style.display = (newChartType === "line" || newChartType === "area") ? "" : "none";
+          }
+        });
+      }
+
+      updateDataSourceOptions(chartType);
+      updateChartTypeOptions(config.dataSource);
+
+      document.getElementById("saveCardEdit").addEventListener("click", async () => {
+        const newTitle = document.getElementById("editCardTitle").value;
+        const newDataSource = document.getElementById("editCardDataSource").value;
+
+        card.title = newTitle;
+        card.config = {
+          ...card.config,
+          dataSource: newDataSource,
+        };
+
+        if (isChartCard) {
+          const newChartType = document.getElementById("editChartType").value;
+          const showLegend = document.getElementById("editShowLegend").checked;
+          const showLabel = document.getElementById("editShowLabel").checked;
+          const showTooltip = document.getElementById("editShowTooltip").checked;
+          let smoothLine = config.smoothLine !== false;
+          if (newChartType === "line" || newChartType === "area") {
+            smoothLine = document.getElementById("editSmoothLine").checked;
+          }
+
+          card.chartType = newChartType;
+          card.config.primaryColor = selectedColor;
+          card.config.colors = [
+            selectedColor,
+            "#5FB878",
+            "#FFB800",
+            "#FF5722",
+            "#9c27b0",
+          ];
+          card.config.showLegend = showLegend;
+          card.config.showLabel = showLabel;
+          card.config.showTooltip = showTooltip;
+          card.config.smoothLine = smoothLine;
+        }
+
+        try {
+          await request.updateUserCard(cardId, {
+            title: newTitle,
+            chartType: card.chartType,
+            config: { ...card.config },
+          });
+        } catch (e) {
+          console.error("[Home] 保存卡片失败:", e);
+        }
+
         const cardEl = document.querySelector(`[data-card-id="${cardId}"]`);
-        cardEl.querySelector(".card-header h3").textContent = card.title;
+        if (cardEl) {
+          cardEl.querySelector(".card-header h3").textContent = newTitle;
+        }
 
-        // 重新渲染内容
         renderCardContent(card);
 
         layui.layer.closeAll();
