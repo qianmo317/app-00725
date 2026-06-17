@@ -206,6 +206,26 @@ const request = {
     }
   },
 
+  async addUserCard(card) {
+    try {
+      const res = await MockAPI.addUserCard(card);
+      return res.data;
+    } catch (error) {
+      Toast.error("添加卡片失败");
+      throw error;
+    }
+  },
+
+  async updateUserCard(cardId, updates) {
+    try {
+      const res = await MockAPI.updateUserCard(cardId, updates);
+      return res.data;
+    } catch (error) {
+      Toast.error("更新卡片失败");
+      throw error;
+    }
+  },
+
   // 卡片模板
   async getCardTemplates(type) {
     try {
