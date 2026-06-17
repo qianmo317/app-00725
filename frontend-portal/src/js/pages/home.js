@@ -3,6 +3,7 @@
 // ==========================================
 
 import request, { Toast, Loading } from "../utils/request.js";
+import CardStore from "../utils/card-store.js";
 
 // 页面状态
 const state = {
@@ -417,14 +418,43 @@ function renderUserCard(card) {
 }
 
 // 渲染卡片内容
+function adaptChartData(chartType, data) {
+  if (!data) return data;
+  const isPie = chartType === "pie";
+  const isPieFormat = Array.isArray(data) && data.length > 0 && "name" in data[0] && "value" in data[0];
+  const isAxisFormat = data.categories && data.series;
+
+  if (isPie && !isPieFormat && isAxisFormat) {
+    return data.series[0].data.map((v, i) => ({
+      name: data.categories[i],
+      value: v,
+    }));
+  }
+
+  if (!isPie && isPieFormat && !isAxisFormat) {
+    return {
+      categories: data.map((d) => d.name),
+      series: [{ name: "数值", data: data.map((d) => d.value) }],
+    };
+  }
+
+  return data;
+}
+
 async function renderCardContent(card) {
   const container = document.getElementById(`card-content-${card.id}`);
   if (!container) return;
 
+  const existing = echarts.getInstanceByDom(container);
+  if (existing) {
+    existing.dispose();
+  }
+  container.innerHTML = "";
+
   try {
     if (card.type === "chart") {
       const data = await request.getChartData(card.config.dataSource);
-      renderChart(container, card.chartType, data, card.config);
+      renderChart(container, card.chartType, adaptChartData(card.chartType, data), card.config);
     } else if (card.type === "list") {
       const data = await request.getChartData(card.config.dataSource);
       renderList(container, data, card.config);
@@ -438,6 +468,14 @@ async function renderCardContent(card) {
 
 // 渲染图表
 function renderChart(container, chartType, data, config) {
+  const existing = echarts.getInstanceByDom(container);
+  if (existing) {
+    existing.dispose();
+  }
+  if (container._resizeHandler) {
+    window.removeEventListener("resize", container._resizeHandler);
+    container._resizeHandler = null;
+  }
   const chart = echarts.init(container);
   let option = {};
 
@@ -641,8 +679,14 @@ function renderChart(container, chartType, data, config) {
       };
   }
 
-  chart.setOption(option);
-  window.addEventListener("resize", () => chart.resize());
+  chart.setOption(option, true);
+
+  const resizeHandler = () => {
+    const inst = echarts.getInstanceByDom(container);
+    if (inst) inst.resize();
+  };
+  window.addEventListener("resize", resizeHandler);
+  container._resizeHandler = resizeHandler;
 }
 
 // 渲染列表
@@ -781,7 +825,6 @@ async function loadCardTemplates(type) {
 async function addCardFromTemplate(templateId, type) {
   const chartType = templateId.replace("tpl_", "");
 
-  // 根据图表类型选择合适的数据源
   let dataSource = "dept_distribution";
   if (chartType === "bar" || chartType === "line" || chartType === "area") {
     dataSource = "monthly_stats";
@@ -814,8 +857,8 @@ async function addCardFromTemplate(templateId, type) {
   };
 
   state.userCards.push(newCard);
+  CardStore.add(newCard);
 
-  // 重新渲染
   const container = document.getElementById("draggableCards");
   const placeholder = document.getElementById("emptyPlaceholder");
 
@@ -839,14 +882,11 @@ async function deleteCard(cardId) {
       try {
         await request.deleteUserCard(cardId);
 
-        // 从DOM移除
         const cardEl = document.querySelector(`[data-card-id="${cardId}"]`);
         cardEl?.remove();
 
-        // 从状态移除
         state.userCards = state.userCards.filter((c) => c.id !== cardId);
 
-        // 检查是否为空
         if (state.userCards.length === 0) {
           document.getElementById("emptyPlaceholder").style.display = "flex";
         }
@@ -854,6 +894,7 @@ async function deleteCard(cardId) {
         layui.layer.closeAll();
       } catch (error) {
         console.error("[Home] 删除卡片失败:", error);
+        Toast.error("删除卡片失败");
       }
     },
   );
@@ -864,10 +905,12 @@ function editCard(cardId) {
   const card = state.userCards.find((c) => c.id === cardId);
   if (!card) return;
 
+  const isChart = card.type === "chart";
+
   layui.layer.open({
     type: 1,
     title: "编辑卡片",
-    area: ["500px", "400px"],
+    area: ["520px", "480px"],
     content: `
             <div style="padding: 20px;">
                 <div class="layui-form-item">
@@ -882,10 +925,39 @@ function editCard(cardId) {
                         <select id="editCardDataSource" class="layui-input">
                             <option value="dept_distribution" ${card.config.dataSource === "dept_distribution" ? "selected" : ""}>部门分布数据</option>
                             <option value="monthly_stats" ${card.config.dataSource === "monthly_stats" ? "selected" : ""}>月度统计数据</option>
+                            <option value="demo" ${card.config.dataSource === "demo" ? "selected" : ""}>示例数据</option>
+                            <option value="user_behavior" ${card.config.dataSource === "user_behavior" ? "selected" : ""}>用户行为数据</option>
+                            <option value="business_kpi" ${card.config.dataSource === "business_kpi" ? "selected" : ""}>业务指标数据</option>
+                            <option value="sales_stats" ${card.config.dataSource === "sales_stats" ? "selected" : ""}>销售统计数据</option>
                             <option value="todo_list" ${card.config.dataSource === "todo_list" ? "selected" : ""}>待办事项</option>
                         </select>
                     </div>
                 </div>
+                ${isChart ? `
+                <div class="layui-form-item">
+                    <label class="layui-form-label" style="width: 90px; white-space: nowrap;">图表类型</label>
+                    <div class="layui-input-block" style="margin-left: 120px;">
+                        <select id="editChartType" class="layui-input">
+                            <option value="line" ${card.chartType === "line" ? "selected" : ""}>折线图</option>
+                            <option value="bar" ${card.chartType === "bar" ? "selected" : ""}>柱状图</option>
+                            <option value="pie" ${card.chartType === "pie" ? "selected" : ""}>饼图</option>
+                            <option value="area" ${card.chartType === "area" ? "selected" : ""}>面积图</option>
+                            <option value="radar" ${card.chartType === "radar" ? "selected" : ""}>雷达图</option>
+                            <option value="gauge" ${card.chartType === "gauge" ? "selected" : ""}>仪表盘</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="layui-form-item">
+                    <label class="layui-form-label" style="width: 90px; white-space: nowrap;">主题色</label>
+                    <div class="layui-input-block" style="margin-left: 120px; display: flex; gap: 8px; padding-top: 6px;">
+                        <div class="edit-color-item ${(card.config.colors?.[0] || "#1E9FFF") === "#1E9FFF" ? "active" : ""}" data-color="#1E9FFF" style="width:28px;height:28px;border-radius:4px;background:#1E9FFF;cursor:pointer;border:2px solid ${(card.config.colors?.[0] || "#1E9FFF") === "#1E9FFF" ? "#333" : "transparent"};"></div>
+                        <div class="edit-color-item ${(card.config.colors?.[0]) === "#5FB878" ? "active" : ""}" data-color="#5FB878" style="width:28px;height:28px;border-radius:4px;background:#5FB878;cursor:pointer;border:2px solid ${(card.config.colors?.[0]) === "#5FB878" ? "#333" : "transparent"};"></div>
+                        <div class="edit-color-item ${(card.config.colors?.[0]) === "#FFB800" ? "active" : ""}" data-color="#FFB800" style="width:28px;height:28px;border-radius:4px;background:#FFB800;cursor:pointer;border:2px solid ${(card.config.colors?.[0]) === "#FFB800" ? "#333" : "transparent"};"></div>
+                        <div class="edit-color-item ${(card.config.colors?.[0]) === "#FF5722" ? "active" : ""}" data-color="#FF5722" style="width:28px;height:28px;border-radius:4px;background:#FF5722;cursor:pointer;border:2px solid ${(card.config.colors?.[0]) === "#FF5722" ? "#333" : "transparent"};"></div>
+                        <div class="edit-color-item ${(card.config.colors?.[0]) === "#9c27b0" ? "active" : ""}" data-color="#9c27b0" style="width:28px;height:28px;border-radius:4px;background:#9c27b0;cursor:pointer;border:2px solid ${(card.config.colors?.[0]) === "#9c27b0" ? "#333" : "transparent"};"></div>
+                    </div>
+                </div>
+                ` : ""}
                 <div class="layui-form-item" style="text-align: right; margin-top: 30px;">
                     <button class="layui-btn" id="saveCardEdit">保存</button>
                     <button class="layui-btn layui-btn-primary" onclick="layui.layer.closeAll()">取消</button>
@@ -893,17 +965,48 @@ function editCard(cardId) {
             </div>
         `,
     success: () => {
+      let selectedColor = card.config.colors?.[0] || "#1E9FFF";
+
+      document.querySelectorAll(".edit-color-item").forEach((item) => {
+        item.addEventListener("click", () => {
+          document.querySelectorAll(".edit-color-item").forEach((i) => {
+            i.style.borderColor = "transparent";
+            i.classList.remove("active");
+          });
+          item.style.borderColor = "#333";
+          item.classList.add("active");
+          selectedColor = item.dataset.color;
+        });
+      });
+
       document.getElementById("saveCardEdit").addEventListener("click", () => {
-        card.title = document.getElementById("editCardTitle").value;
-        card.config.dataSource =
-          document.getElementById("editCardDataSource").value;
+        const updates = {
+          title: document.getElementById("editCardTitle").value,
+          config: {
+            ...card.config,
+            dataSource: document.getElementById("editCardDataSource").value,
+          },
+        };
 
-        // 更新DOM
+        if (isChart) {
+          updates.chartType = document.getElementById("editChartType").value;
+          updates.config.colors = [
+            selectedColor,
+            "#5FB878",
+            "#FFB800",
+            "#FF5722",
+            "#9c27b0",
+          ];
+        }
+
+        Object.assign(card, updates);
+        CardStore.update(cardId, updates);
+
         const cardEl = document.querySelector(`[data-card-id="${cardId}"]`);
-        cardEl.querySelector(".card-header h3").textContent = card.title;
-
-        // 重新渲染内容
-        renderCardContent(card);
+        if (cardEl) {
+          cardEl.querySelector(".card-header h3").textContent = card.title;
+          renderCardContent(card);
+        }
 
         layui.layer.closeAll();
         Toast.success("卡片已更新");
@@ -915,9 +1018,11 @@ function editCard(cardId) {
 // 保存布局
 async function saveLayout() {
   try {
-    await request.saveUserCards(state.userCards);
+    CardStore.saveAll(state.userCards);
+    Toast.success("布局已保存");
   } catch (error) {
     console.error("[Home] 保存布局失败:", error);
+    Toast.error("保存布局失败");
   }
 }
 

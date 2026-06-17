@@ -3,6 +3,7 @@
 // ==========================================
 
 import { Toast } from "../utils/request.js";
+import CardStore from "../utils/card-store.js";
 
 // 页面状态
 const state = {
@@ -594,18 +595,30 @@ function updateConfigCode() {
 // 保存卡片
 function saveCard() {
   const cardConfig = {
-    id: "card_" + Date.now(),
-    type: state.chartType,
-    ...state.config,
-    createTime: new Date().toISOString(),
+    id: "uc" + Date.now(),
+    type: "chart",
+    chartType: state.chartType,
+    title: state.config.title,
+    config: {
+      dataSource: state.config.dataSource,
+      colors: [
+        state.config.primaryColor,
+        "#5FB878",
+        "#FFB800",
+        "#FF5722",
+        "#9c27b0",
+      ],
+      showLegend: state.config.showLegend,
+      showLabel: state.config.showLabel,
+      smoothLine: state.config.smoothLine,
+      showTooltip: state.config.showTooltip,
+      refreshRate: state.config.refreshRate,
+      clickAction: state.config.clickAction,
+    },
   };
 
-  // 模拟保存到本地存储
-  const savedCards = JSON.parse(localStorage.getItem("savedCards") || "[]");
-  savedCards.push(cardConfig);
-  localStorage.setItem("savedCards", JSON.stringify(savedCards));
-
-  Toast.success("卡片配置已保存到本地");
+  CardStore.add(cardConfig);
+  Toast.success("卡片已保存到工作台");
 }
 
 // 添加到工作台
@@ -624,15 +637,16 @@ function addToWorkspace() {
         "#FF5722",
         "#9c27b0",
       ],
+      showLegend: state.config.showLegend,
+      showLabel: state.config.showLabel,
+      smoothLine: state.config.smoothLine,
+      showTooltip: state.config.showTooltip,
+      refreshRate: state.config.refreshRate,
+      clickAction: state.config.clickAction,
     },
   };
 
-  // 模拟添加到工作台
-  const workspaceCards = JSON.parse(
-    localStorage.getItem("workspaceCards") || "[]",
-  );
-  workspaceCards.push(cardConfig);
-  localStorage.setItem("workspaceCards", JSON.stringify(workspaceCards));
+  CardStore.add(cardConfig);
 
   layui.layer.confirm(
     "卡片已添加到工作台，是否立即查看？",

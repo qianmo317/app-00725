@@ -2,7 +2,8 @@
 // Mock API 服务 - 模拟后端接口
 // ==========================================
 
-// 模拟延迟
+import CardStore from "../utils/card-store.js";
+
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
 // 占位图生成函数
@@ -544,6 +545,34 @@ const mockDB = {
 
   // 图表数据
   chartData: {
+    demo: {
+      categories: ["周一", "周二", "周三", "周四", "周五", "周六", "周日"],
+      series: [
+        { name: "访问量", data: [820, 932, 901, 934, 1290, 1330, 1320] },
+        { name: "订单量", data: [320, 432, 401, 534, 690, 730, 620] },
+      ],
+    },
+    user_behavior: {
+      categories: ["1月", "2月", "3月", "4月", "5月", "6月"],
+      series: [
+        { name: "活跃用户", data: [1200, 1350, 1280, 1420, 1580, 1690] },
+        { name: "新增用户", data: [320, 410, 380, 450, 520, 580] },
+      ],
+    },
+    business_kpi: {
+      categories: ["Q1", "Q2", "Q3", "Q4"],
+      series: [
+        { name: "收入", data: [2800, 3200, 3500, 4100] },
+        { name: "成本", data: [1800, 2100, 2200, 2500] },
+      ],
+    },
+    sales_stats: {
+      categories: ["1月", "2月", "3月", "4月", "5月", "6月"],
+      series: [
+        { name: "销售额", data: [420, 380, 510, 470, 620, 580] },
+        { name: "利润", data: [180, 150, 220, 200, 280, 260] },
+      ],
+    },
     dept_distribution: [
       { name: "技术部", value: 35 },
       { name: "销售部", value: 25 },
@@ -690,18 +719,30 @@ const MockAPI = {
   // 用户卡片
   async getUserCards() {
     await delay(300);
-    return { code: 200, data: mockDB.userCards, message: "success" };
+    return { code: 200, data: CardStore.getAll(), message: "success" };
   },
 
   async saveUserCards(cards) {
     await delay(400);
-    mockDB.userCards = cards;
+    CardStore.saveAll(cards);
     return { code: 200, data: cards, message: "success" };
   },
 
   async deleteUserCard(cardId) {
     await delay(200);
-    mockDB.userCards = mockDB.userCards.filter((c) => c.id !== cardId);
+    CardStore.remove(cardId);
+    return { code: 200, data: null, message: "success" };
+  },
+
+  async addUserCard(card) {
+    await delay(200);
+    CardStore.add(card);
+    return { code: 200, data: card, message: "success" };
+  },
+
+  async updateUserCard(cardId, updates) {
+    await delay(200);
+    CardStore.update(cardId, updates);
     return { code: 200, data: null, message: "success" };
   },
 
@@ -718,11 +759,12 @@ const MockAPI = {
   // 图表数据
   async getChartData(dataSource) {
     await delay(350);
-    const data = mockDB.chartData[dataSource];
-    if (data) {
-      return { code: 200, data, message: "success" };
+    let data = mockDB.chartData[dataSource];
+    if (!data) {
+      console.warn(`[MockAPI] 数据源 "${dataSource}" 不存在，降级使用 demo`);
+      data = mockDB.chartData.demo;
     }
-    return { code: 404, data: null, message: "数据源不存在" };
+    return { code: 200, data, message: "success" };
   },
 
   // 应用模板市场
