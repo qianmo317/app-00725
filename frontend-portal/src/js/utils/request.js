@@ -206,6 +206,57 @@ const request = {
     }
   },
 
+  async addUserCard(card) {
+    try {
+      const res = await MockAPI.addUserCard(card);
+      return res.data;
+    } catch (error) {
+      Toast.error("添加卡片失败");
+      throw error;
+    }
+  },
+
+  async updateUserCard(cardId, updates) {
+    try {
+      const res = await MockAPI.updateUserCard(cardId, updates);
+      Toast.success("卡片已更新");
+      return res.data;
+    } catch (error) {
+      Toast.error("更新卡片失败");
+      throw error;
+    }
+  },
+
+  async getUserCardById(cardId) {
+    try {
+      const res = await MockAPI.getUserCardById(cardId);
+      return res.data;
+    } catch (error) {
+      Toast.error("获取卡片失败");
+      throw error;
+    }
+  },
+
+  async saveFactoryCard(cardConfig) {
+    try {
+      const res = await MockAPI.saveFactoryCard(cardConfig);
+      return res.data;
+    } catch (error) {
+      Toast.error("保存卡片配置失败");
+      throw error;
+    }
+  },
+
+  async getFactoryCards() {
+    try {
+      const res = await MockAPI.getFactoryCards();
+      return res.data;
+    } catch (error) {
+      Toast.error("获取卡片配置失败");
+      throw error;
+    }
+  },
+
   // 卡片模板
   async getCardTemplates(type) {
     try {
