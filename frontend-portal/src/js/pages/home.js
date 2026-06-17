@@ -3,6 +3,7 @@
 // ==========================================
 
 import request, { Toast, Loading } from "../utils/request.js";
+import CardStore from "../utils/cardStore.js";
 
 // 页面状态
 const state = {
@@ -31,7 +32,193 @@ async function initPage() {
   // 初始化拖拽
   initSortable();
 
+  // 初始化数据同步监听
+  initDataSync();
+
   console.log("[Home] 首页初始化完成");
+}
+
+// 初始化数据同步
+function initDataSync() {
+  // 订阅卡片存储变化
+  CardStore.subscribe((cards, change) => {
+    console.log("[Home] 卡片数据变化:", change.type);
+    handleCardStoreChange(cards, change);
+  });
+
+  // 页面可见性变化时刷新（从其他页面切回来时）
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) {
+      console.log("[Home] 页面重新可见，同步卡片数据");
+      syncCardsFromStore();
+    }
+  });
+
+  // 页面聚焦时刷新
+  window.addEventListener("focus", () => {
+    console.log("[Home] 页面获得焦点，同步卡片数据");
+    syncCardsFromStore();
+  });
+}
+
+// 处理卡片存储变化
+function handleCardStoreChange(cards, change) {
+  const container = document.getElementById("draggableCards");
+  const placeholder = document.getElementById("emptyPlaceholder");
+
+  switch (change.type) {
+    case "add":
+      // 新增卡片追加到末尾
+      if (change.card && !state.userCards.find((c) => c.id === change.card.id)) {
+        state.userCards.push(change.card);
+        placeholder.style.display = "none";
+        container.insertAdjacentHTML("beforeend", renderUserCard(change.card));
+        renderCardContent(change.card);
+      }
+      break;
+
+    case "update":
+      // 更新单个卡片内容
+      if (change.card) {
+        const cardIndex = state.userCards.findIndex((c) => c.id === change.card.id);
+        if (cardIndex !== -1) {
+          state.userCards[cardIndex] = { ...state.userCards[cardIndex], ...change.card };
+          // 重新渲染该卡片的标题和内容
+          const cardEl = container.querySelector(`[data-card-id="${change.card.id}"]`);
+          if (cardEl) {
+            cardEl.querySelector(".card-header h3").textContent = change.card.title;
+            const contentEl = cardEl.querySelector(".card-content-area");
+            if (contentEl) {
+              contentEl.innerHTML = "";
+              renderCardContent(change.card);
+            }
+          }
+        }
+      }
+      break;
+
+    case "delete":
+      // 删除单个卡片
+      if (change.cardId) {
+        state.userCards = state.userCards.filter((c) => c.id !== change.cardId);
+        const cardEl = container.querySelector(`[data-card-id="${change.cardId}"]`);
+        cardEl?.remove();
+        if (state.userCards.length === 0) {
+          placeholder.style.display = "flex";
+        }
+      }
+      break;
+
+    case "replace":
+    case "storage":
+    default:
+      // 全量替换或跨页面同步：保留当前排序，增量更新
+      syncCardsFromStore();
+      break;
+  }
+}
+
+// 从存储同步卡片数据，保留当前页面排序
+function syncCardsFromStore() {
+  const storeCards = CardStore.getCards();
+  const container = document.getElementById("draggableCards");
+  const placeholder = document.getElementById("emptyPlaceholder");
+
+  // 获取当前 DOM 中的卡片顺序
+  const currentCardEls = Array.from(container.querySelectorAll(".draggable-card"));
+  const currentOrder = currentCardEls.map((el) => el.dataset.cardId);
+
+  // 构建存储卡片的映射
+  const storeCardMap = {};
+  storeCards.forEach((card) => {
+    storeCardMap[card.id] = card;
+  });
+
+  // 找出需要新增的卡片（存储中有但当前没有的）
+  const currentIds = new Set(currentOrder);
+  const newCards = storeCards.filter((card) => !currentIds.has(card.id));
+
+  // 找出需要删除的卡片（当前有但存储中没有的）
+  const storeIds = new Set(storeCards.map((c) => c.id));
+  const deletedIds = currentOrder.filter((id) => !storeIds.has(id));
+
+  // 删除不存在的卡片
+  deletedIds.forEach((id) => {
+    const cardEl = container.querySelector(`[data-card-id="${id}"]`);
+    cardEl?.remove();
+  });
+
+  // 更新已有卡片的内容
+  currentOrder.forEach((id) => {
+    if (storeCardMap[id]) {
+      const stateCard = state.userCards.find((c) => c.id === id);
+      if (stateCard) {
+        const storeCard = storeCardMap[id];
+        // 检查是否有变化
+        const hasChanged = JSON.stringify(stateCard.config) !== JSON.stringify(storeCard.config)
+          || stateCard.title !== storeCard.title
+          || stateCard.chartType !== storeCard.chartType;
+
+        if (hasChanged) {
+          const idx = state.userCards.findIndex((c) => c.id === id);
+          state.userCards[idx] = { ...storeCard };
+
+          const cardEl = container.querySelector(`[data-card-id="${id}"]`);
+          if (cardEl) {
+            cardEl.querySelector(".card-header h3").textContent = storeCard.title;
+            const contentEl = cardEl.querySelector(".card-content-area");
+            if (contentEl) {
+              contentEl.innerHTML = "";
+              renderCardContent(storeCard);
+            }
+          }
+        }
+      }
+    }
+  });
+
+  // 新增卡片追加到末尾
+  newCards.forEach((card) => {
+    state.userCards.push(card);
+    container.insertAdjacentHTML("beforeend", renderUserCard(card));
+    renderCardContent(card);
+  });
+
+  // 更新 state.userCards 的顺序（按当前 DOM 顺序
+  const newOrder = currentOrder.filter((id) => storeIds.has(id))
+    .concat(newCards.map((c) => c.id));
+  state.userCards = newOrder
+    .map((id) => storeCardMap[id] || state.userCards.find((c) => c.id === id))
+    .filter(Boolean);
+
+  // 处理空状态
+  if (state.userCards.length === 0) {
+    placeholder.style.display = "flex";
+  } else {
+    placeholder.style.display = "none";
+  }
+}
+
+// 刷新用户卡片（全量重绘，保留给初始化用）
+function refreshUserCards(cards) {
+  const container = document.getElementById("draggableCards");
+  const placeholder = document.getElementById("emptyPlaceholder");
+
+  state.userCards = cards;
+
+  if (cards.length === 0) {
+    placeholder.style.display = "flex";
+    container.innerHTML = "";
+    return;
+  }
+
+  placeholder.style.display = "none";
+  container.innerHTML = cards.map((card) => renderUserCard(card)).join("");
+
+  // 渲染卡片内容
+  cards.forEach((card) => {
+    renderCardContent(card);
+  });
 }
 
 // 绑定事件
@@ -149,6 +336,14 @@ function bindEvents() {
   document
     .getElementById("emptyPlaceholder")
     ?.addEventListener("click", openAddCardModal);
+
+  // 跳转到卡片工厂
+  document
+    .getElementById("goToCardFactory")
+    ?.addEventListener("click", () => {
+      closeAddCardModal();
+      window.location.href = "pages/card-factory.html";
+    });
 }
 
 // 加载 KPI 数据
@@ -437,18 +632,33 @@ async function renderCardContent(card) {
 }
 
 // 渲染图表
-function renderChart(container, chartType, data, config) {
+function renderChart(container, chartType, data, config = {}) {
   const chart = echarts.init(container);
   let option = {};
+
+  const colors = config.colors || [
+    "#1E9FFF",
+    "#5FB878",
+    "#FFB800",
+    "#FF5722",
+    "#9c27b0",
+  ];
+  const showLegend = config.showLegend ?? true;
+  const showLabel = config.showLabel ?? false;
+  const smoothLine = config.smoothLine ?? true;
+  const showTooltip = config.showTooltip ?? true;
 
   switch (chartType) {
     case "pie":
       option = {
+        color: colors,
         tooltip: {
+          show: showTooltip,
           trigger: "item",
           formatter: "{b}: {c} ({d}%)",
         },
         legend: {
+          show: showLegend,
           orient: "vertical",
           right: 10,
           top: "center",
@@ -458,9 +668,12 @@ function renderChart(container, chartType, data, config) {
           {
             type: "pie",
             radius: ["40%", "70%"],
-            center: ["40%", "50%"],
+            center: showLegend ? ["40%", "50%"] : ["50%", "50%"],
             avoidLabelOverlap: false,
-            label: { show: false },
+            label: {
+              show: showLabel,
+              formatter: "{b}: {d}%",
+            },
             emphasis: {
               label: { show: true, fontWeight: "bold" },
             },
@@ -472,27 +685,22 @@ function renderChart(container, chartType, data, config) {
             },
           },
         ],
-        color: config.colors || [
-          "#1E9FFF",
-          "#5FB878",
-          "#FFB800",
-          "#FF5722",
-          "#9c27b0",
-        ],
       };
       break;
 
     case "bar":
       option = {
-        tooltip: { trigger: "axis" },
+        color: colors,
+        tooltip: { show: showTooltip, trigger: "axis" },
         legend: {
+          show: showLegend,
           data: data.series.map((s) => s.name),
           bottom: 0,
         },
         grid: {
           left: "3%",
           right: "4%",
-          bottom: "15%",
+          bottom: showLegend ? "15%" : "10%",
           top: "10%",
           containLabel: true,
         },
@@ -513,9 +721,12 @@ function renderChart(container, chartType, data, config) {
           type: "bar",
           data: s.data,
           barWidth: "30%",
+          label: {
+            show: showLabel,
+            position: "top",
+          },
           itemStyle: {
             borderRadius: [4, 4, 0, 0],
-            color: i === 0 ? "#1E9FFF" : "#5FB878",
           },
         })),
       };
@@ -524,15 +735,17 @@ function renderChart(container, chartType, data, config) {
     case "line":
     case "area":
       option = {
-        tooltip: { trigger: "axis" },
+        color: colors,
+        tooltip: { show: showTooltip, trigger: "axis" },
         legend: {
+          show: showLegend,
           data: data.series.map((s) => s.name),
           bottom: 0,
         },
         grid: {
           left: "3%",
           right: "4%",
-          bottom: "15%",
+          bottom: showLegend ? "15%" : "10%",
           top: "10%",
           containLabel: true,
         },
@@ -551,10 +764,13 @@ function renderChart(container, chartType, data, config) {
         series: data.series.map((s, i) => ({
           name: s.name,
           type: "line",
-          smooth: true,
+          smooth: smoothLine,
           data: s.data,
-          itemStyle: {
-            color: i === 0 ? "#1E9FFF" : "#5FB878",
+          symbol: "circle",
+          symbolSize: 6,
+          label: {
+            show: showLabel,
+            position: "top",
           },
           areaStyle: chartType === "area" ? { opacity: 0.3 } : null,
         })),
@@ -563,8 +779,10 @@ function renderChart(container, chartType, data, config) {
 
     case "radar":
       option = {
-        tooltip: {},
+        color: colors,
+        tooltip: { show: showTooltip },
         legend: {
+          show: showLegend,
           data: ["数据指标"],
           bottom: 0,
         },
@@ -593,13 +811,13 @@ function renderChart(container, chartType, data, config) {
             areaStyle: { opacity: 0.3 },
           },
         ],
-        color: ["#1E9FFF"],
       };
       break;
 
     case "gauge":
       option = {
-        tooltip: { formatter: "{b}: {c}%" },
+        color: colors,
+        tooltip: { show: showTooltip, formatter: "{b}: {c}%" },
         series: [
           {
             type: "gauge",
@@ -619,7 +837,6 @@ function renderChart(container, chartType, data, config) {
             data: [{ value: 75, name: "完成率" }],
           },
         ],
-        color: ["#1E9FFF"],
       };
       break;
 
@@ -802,20 +1019,29 @@ async function addCardFromTemplate(templateId, type) {
   };
 
   const newCard = {
-    id: "uc" + Date.now(),
+    id: CardStore.generateCardId(),
     type: type === "list" ? "list" : "chart",
     chartType: chartType,
     title: titleMap[chartType] || "新建卡片",
     config: {
       dataSource: dataSource,
       colors: ["#1E9FFF", "#5FB878", "#FFB800", "#FF5722", "#9c27b0"],
+      showLegend: true,
+      showLabel: false,
+      smoothLine: true,
+      showTooltip: true,
+      refreshRate: 0,
+      clickAction: "none",
       limit: 5,
     },
+    createTime: new Date().toISOString(),
   };
+
+  CardStore.addCard(newCard);
 
   state.userCards.push(newCard);
 
-  // 重新渲染
+  // 局部更新：追加到末尾，不触发全量重绘
   const container = document.getElementById("draggableCards");
   const placeholder = document.getElementById("emptyPlaceholder");
 
@@ -837,9 +1063,9 @@ async function deleteCard(cardId) {
     },
     async () => {
       try {
-        await request.deleteUserCard(cardId);
+        CardStore.deleteCard(cardId);
 
-        // 从DOM移除
+        // 局部更新：从 DOM 移除，不触发全量重绘
         const cardEl = document.querySelector(`[data-card-id="${cardId}"]`);
         cardEl?.remove();
 
@@ -852,6 +1078,7 @@ async function deleteCard(cardId) {
         }
 
         layui.layer.closeAll();
+        Toast.success("卡片已删除");
       } catch (error) {
         console.error("[Home] 删除卡片失败:", error);
       }
@@ -864,11 +1091,24 @@ function editCard(cardId) {
   const card = state.userCards.find((c) => c.id === cardId);
   if (!card) return;
 
-  layui.layer.open({
-    type: 1,
-    title: "编辑卡片",
-    area: ["500px", "400px"],
-    content: `
+  if (card.type === "chart") {
+    layui.layer.confirm(
+      "将跳转至卡片工厂进行编辑，修改保存后自动同步到工作台。",
+      {
+        btn: ["去编辑", "取消"],
+        icon: 0,
+        title: "编辑卡片",
+      },
+      () => {
+        window.location.href = `pages/card-factory.html?cardId=${cardId}`;
+      },
+    );
+  } else {
+    layui.layer.open({
+      type: 1,
+      title: "编辑卡片",
+      area: ["500px", "400px"],
+      content: `
             <div style="padding: 20px;">
                 <div class="layui-form-item">
                     <label class="layui-form-label" style="width: 90px; white-space: nowrap;">卡片标题</label>
@@ -892,32 +1132,38 @@ function editCard(cardId) {
                 </div>
             </div>
         `,
-    success: () => {
-      document.getElementById("saveCardEdit").addEventListener("click", () => {
-        card.title = document.getElementById("editCardTitle").value;
-        card.config.dataSource =
-          document.getElementById("editCardDataSource").value;
+      success: () => {
+        document.getElementById("saveCardEdit").addEventListener("click", () => {
+          card.title = document.getElementById("editCardTitle").value;
+          card.config.dataSource =
+            document.getElementById("editCardDataSource").value;
 
-        // 更新DOM
-        const cardEl = document.querySelector(`[data-card-id="${cardId}"]`);
-        cardEl.querySelector(".card-header h3").textContent = card.title;
+          CardStore.updateCard(cardId, {
+            title: card.title,
+            config: { ...card.config },
+          });
 
-        // 重新渲染内容
-        renderCardContent(card);
+          const cardEl = document.querySelector(`[data-card-id="${cardId}"]`);
+          cardEl.querySelector(".card-header h3").textContent = card.title;
 
-        layui.layer.closeAll();
-        Toast.success("卡片已更新");
-      });
-    },
-  });
+          renderCardContent(card);
+
+          layui.layer.closeAll();
+          Toast.success("卡片已更新");
+        });
+      },
+    });
+  }
 }
 
 // 保存布局
 async function saveLayout() {
   try {
-    await request.saveUserCards(state.userCards);
+    CardStore.saveCards(state.userCards);
+    Toast.success("布局已保存");
   } catch (error) {
     console.error("[Home] 保存布局失败:", error);
+    Toast.error("保存布局失败");
   }
 }
 
