@@ -2,6 +2,8 @@
 // Mock API 服务 - 模拟后端接口
 // ==========================================
 
+import CardStore from "../utils/cardStore.js";
+
 // 模拟延迟
 const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
@@ -690,18 +692,19 @@ const MockAPI = {
   // 用户卡片
   async getUserCards() {
     await delay(300);
-    return { code: 200, data: mockDB.userCards, message: "success" };
+    const cards = CardStore.getCards();
+    return { code: 200, data: cards, message: "success" };
   },
 
   async saveUserCards(cards) {
     await delay(400);
-    mockDB.userCards = cards;
+    CardStore.saveCards(cards);
     return { code: 200, data: cards, message: "success" };
   },
 
   async deleteUserCard(cardId) {
     await delay(200);
-    mockDB.userCards = mockDB.userCards.filter((c) => c.id !== cardId);
+    CardStore.deleteCard(cardId);
     return { code: 200, data: null, message: "success" };
   },
 

@@ -474,6 +474,77 @@ $spacing-xs: 4px;
 
 // 添加卡片弹窗
 #addCardModal {
+  .card-factory-entry {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: $spacing-lg;
+    background: linear-gradient(135deg, rgba($primary-color, 0.05), rgba($primary-color, 0.1));
+    border: 1px solid rgba($primary-color, 0.2);
+    border-radius: $radius-lg;
+    margin-bottom: $spacing-lg;
+
+    .entry-content {
+      display: flex;
+      align-items: center;
+      gap: $spacing-md;
+
+      .entry-icon {
+        width: 48px;
+        height: 48px;
+        background: $primary-color;
+        border-radius: $radius-md;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        i {
+          font-size: 24px;
+          color: #fff;
+        }
+      }
+
+      .entry-text {
+        h4 {
+          font-size: 15px;
+          font-weight: 600;
+          color: $text-primary;
+          margin-bottom: 4px;
+        }
+
+        p {
+          font-size: 12px;
+          color: $text-secondary;
+          margin: 0;
+        }
+      }
+    }
+  }
+
+  .divider-with-text {
+    position: relative;
+    text-align: center;
+    margin-bottom: $spacing-lg;
+
+    &::before {
+      content: "";
+      position: absolute;
+      top: 50%;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: $border-color;
+    }
+
+    span {
+      position: relative;
+      padding: 0 $spacing-md;
+      background: #fff;
+      font-size: 12px;
+      color: $text-muted;
+    }
+  }
+
   .card-type-tabs {
     display: flex;
     gap: $spacing-sm;
